@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "quite-logical",
+	"version": "${version}",
+	"name": "Quite Logical",
+	"description": "Quite..Logical! Expand your vanilla experience with this mod",
+	"authors": [
+		"Jhabit"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/Quite-Logical/Fabric-Quite-Logical-1.21.11"
+	},
+	"license": "MIT",
+	"icon": "assets/quite-logical/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.jhabit.quitelogical.QuiteLogical"
+		],
+		"fabric-datagen": [
+			"net.jhabit.quitelogical.QuiteLogicalDataGenerator"
+		],
+		"Client": [
+			"net.jhabit.quitelogical.QuiteLogicalClient"
+		]
+	},
+	"mixins": [
+		"quite-logical.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
