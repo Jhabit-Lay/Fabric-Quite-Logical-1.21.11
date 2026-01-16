@@ -12,7 +12,7 @@
 		"sources": "https://github.com/Quite-Logical/Fabric-Quite-Logical-1.21.11"
 	},
 	"license": "MIT",
-	"icon": "assets/quite-logical/icon.png",
+	"icon": "assets/qlogic/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

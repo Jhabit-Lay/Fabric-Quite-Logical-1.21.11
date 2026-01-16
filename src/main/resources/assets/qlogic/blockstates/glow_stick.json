@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "waterlogged=false": {
+      "model": "qlogic:block/glow_stick"
+    },
+    "waterlogged=true": {
+      "model": "qlogic:block/glow_stick"
+    }
+  }
+}

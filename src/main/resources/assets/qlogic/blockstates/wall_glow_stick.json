@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=east,waterlogged=false":  { "model": "qlogic:block/wall_glow_stick" },
+    "facing=east,waterlogged=true":   { "model": "qlogic:block/wall_glow_stick" },
+    "facing=south,waterlogged=false": { "model": "qlogic:block/wall_glow_stick", "y": 90 },
+    "facing=south,waterlogged=true":  { "model": "qlogic:block/wall_glow_stick", "y": 90 },
+    "facing=west,waterlogged=false":  { "model": "qlogic:block/wall_glow_stick", "y": 180 },
+    "facing=west,waterlogged=true":   { "model": "qlogic:block/wall_glow_stick", "y": 180 },
+    "facing=north,waterlogged=false": { "model": "qlogic:block/wall_glow_stick", "y": 270 },
+    "facing=north,waterlogged=true":  { "model": "qlogic:block/wall_glow_stick", "y": 270 }
+  }
+}
