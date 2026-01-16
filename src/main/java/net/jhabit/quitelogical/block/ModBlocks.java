@@ -20,7 +20,6 @@ import java.util.function.Function;
 
 public class ModBlocks {
 
-    // 1. 벽면용 블록 (dropsLike 메서드 제거)
     public static final Block WALL_GLOW_STICK = register(
             "wall_glow_stick",
             (settings) -> new WaterproofWallTorchBlock(ParticleTypes.GLOW, settings),
@@ -62,8 +61,8 @@ public class ModBlocks {
             StandingAndWallBlockItem blockItem = new StandingAndWallBlockItem(
                     block,
                     WALL_GLOW_STICK,
-                    Direction.DOWN, // 방향이 먼저 와야 함
-                    new Item.Properties().setId(itemKey).useBlockDescriptionPrefix() // 설정이 마지막
+                    Direction.DOWN, // 방향이 먼저
+                    new Item.Properties().setId(itemKey).useBlockDescriptionPrefix() // 설정이 나중
             );
 
             Registry.register(BuiltInRegistries.ITEM, itemKey, blockItem);

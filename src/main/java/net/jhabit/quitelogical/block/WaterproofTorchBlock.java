@@ -28,7 +28,7 @@ public class WaterproofTorchBlock extends TorchBlock implements SimpleWaterlogge
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> builder) {
         builder.add(WATERLOGGED);
     }
 
@@ -46,9 +46,9 @@ public class WaterproofTorchBlock extends TorchBlock implements SimpleWaterlogge
 
     // 1.21.11 기준 8개의 인자를 가지는 정확한 시그니처입니다.
     @Override
-    public BlockState updateShape(@NotNull BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+    public BlockState updateShape(@NotNull BlockState state, net.minecraft.world.level.LevelReader level, net.minecraft.world.level.ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, net.minecraft.util.RandomSource random) {
         if (state.getValue(WATERLOGGED)) {
-            tickAccess.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+            tickAccess.scheduleTick(pos, net.minecraft.world.level.material.Fluids.WATER, net.minecraft.world.level.material.Fluids.WATER.getTickDelay(level));
         }
         return super.updateShape(state, level, tickAccess, pos, direction, neighborPos, neighborState, random);
     }
