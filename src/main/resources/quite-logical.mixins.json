@@ -3,7 +3,8 @@
 	"package": "net.jhabit.quitelogical.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"TorchflowerLightMixin"
+		"TorchflowerLightMixin",
+		"CowEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

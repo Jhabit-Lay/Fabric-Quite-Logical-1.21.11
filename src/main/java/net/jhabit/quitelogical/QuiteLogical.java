@@ -2,15 +2,19 @@ package net.jhabit.quitelogical;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.quitelogical.block.ModBlocks;
 import net.jhabit.quitelogical.items.ModItems;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.minecraft.world.item.CreativeModeTabs;
 
 public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
@@ -23,17 +27,22 @@ public class QuiteLogical implements ModInitializer {
 
 		// 아이템 그룹 등록
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
-				.register((itemGroup) -> itemGroup.accept(ModBlocks.GLOW_STICK)); // 불필요한 세미콜론 제거
+				.register((itemGroup) -> itemGroup.accept(ModBlocks.GLOW_STICK));
 
-		// 1.21.11 환경에서의 양조 레시피 등록 (반드시 onInitialize 안에 위치해야 함)
+		// [오류 해결] 양조 레시피 등록 코드를 메서드 안으로 이동
 		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder -> {
 			builder.registerPotionRecipe(
-					Potions.AWKWARD,                       // 하단: 어색한 포션
-					Ingredient.of(Items.POISONOUS_POTATO), // 상단: 썩은 감자
-					Potions.POISON                         // 결과: 독 포션
+					Potions.AWKWARD,
+					Ingredient.of(Items.POISONOUS_POTATO),
+					Potions.POISON
 			);
 		});
 
-		LOGGER.info("Quite Logical 모드가 성공적으로 초기화되었습니다!");
-	} // onInitialize 메서드가 여기서 끝나야 합니다.
+		// [소 변이 대응] 소와 무시룸 모두에게 공격력 속성 부여
+		// Mixin에서 오류가 나는 속성 등록은 여기서 하는 것이 가장 안전합니다.
+		FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
+		FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
+
+		LOGGER.info("Quite Logical 초기화 완료!");
+	}
 }
