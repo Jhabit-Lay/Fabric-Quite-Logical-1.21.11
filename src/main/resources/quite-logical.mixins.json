@@ -4,7 +4,9 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"TorchflowerLightMixin",
-		"CowEntityMixin"
+		"CowEntityMixin",
+		"MinecartSpeedFixMixin",
+		"NewMinecartBehavior"
 	],
 	"injectors": {
 		"defaultRequire": 1
