@@ -6,7 +6,8 @@
 		"TorchflowerLightMixin",
 		"CowEntityMixin",
 		"MinecartSpeedFixMixin",
-		"NewMinecartBehavior"
+		"NewMinecartBehavior",
+		"HGhastAccelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
