@@ -14,7 +14,9 @@
 		"ArmorStandMixin",
 		"HorseModelMixin",
 		"AnvilMenuMixin",
-		"InstrumentItemMixin"
+		"InstrumentItemMixin",
+		"ShieldPositionMixin",
+		"FireOverlayMixin"
 	],
 	"client": [
 	],
