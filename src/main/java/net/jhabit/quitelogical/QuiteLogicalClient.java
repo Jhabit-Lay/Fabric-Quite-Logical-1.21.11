@@ -11,6 +11,9 @@ public class QuiteLogicalClient implements ClientModInitializer {
     public static final Identifier LEADER_ZOMBIE_TEXTURE =
             Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/leader_zombie.png");
 
+    public static final Identifier JUNGLE_ZOMBIE_TEXTURE =
+            Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/jungle_zombie.png");
+
     @Override
     public void onInitializeClient() {
         EntityRendererRegistry.register(QuiteLogical.ZOMBIE_LEADER, (context) ->
@@ -19,6 +22,16 @@ public class QuiteLogicalClient implements ClientModInitializer {
                     // [2] 이제 super 대신 우리가 만든 텍스처를 반환합니다.
                     public Identifier getTextureLocation(ZombieRenderState state) {
                         return LEADER_ZOMBIE_TEXTURE;
+                    }
+                }
+        );
+
+        EntityRendererRegistry.register(QuiteLogical.JUNGLE_ZOMBIE, (context) ->
+                new ZombieRenderer(context) {
+                    @Override
+                    public Identifier getTextureLocation(ZombieRenderState state) {
+                        // 정글 좀비 전용 텍스처를 반환합니다.
+                        return JUNGLE_ZOMBIE_TEXTURE;
                     }
                 }
         );

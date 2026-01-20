@@ -1,6 +1,8 @@
 {
   "block.qlogic.glow_stick": "Glow Stick",
   "tag.qlogic.nuggets" : "nuggets",
+  "entity.qlogic.zombie_leader": "Leader Zombie",
+  "entity.qlogic.jungle_zombie": "Jungle Zombie",
   "item.qlogic.copper_goat_horn": "Copper Goat Horn",
   "tooltip.quitelogical.linked_horse": "Linked Horse: %s",
   "tooltip.quitelogical.no_linked_horse": "No horse linked.",
