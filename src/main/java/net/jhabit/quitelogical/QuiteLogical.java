@@ -10,7 +10,6 @@ import net.jhabit.quitelogical.items.ModItems;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -27,6 +26,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 
 import java.util.Optional;
 
@@ -47,48 +48,56 @@ public class QuiteLogical implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		ModComponents.register();
 		ModBlocks.initialize();
 		ModItems.initialize();
 
 		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(ZOMBIE_LEADER, Zombie.createAttributes());
 
+		FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 1.0));
+		FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 1.0));
+
 		// 아이템 그룹 등록
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
 				.register(entries -> entries.accept(ModBlocks.GLOW_STICK));
 
-		// [오류 해결] 양조 레시피 등록 코드를 메서드 안으로 이동
-		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder ->
-				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
-		);
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> {
+			content.accept(ModItems.COPPER_GOAT_HORN);
 
-		FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
-		FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
+			// [오류 해결] 양조 레시피 등록 코드를 메서드 안으로 이동
+			FabricBrewingRecipeRegistryBuilder.BUILD.register(builder ->
+					builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
+			);
 
-		// [레진 밀랍칠 기능 구현]
-		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			ItemStack stack = player.getItemInHand(hand);
+			FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
+			FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
 
-			if (stack.is(Items.RESIN_CLUMP)) {
-				var pos = hitResult.getBlockPos();
-				BlockState state = world.getBlockState(pos);
+			// [레진 밀랍칠 기능 구현]
+			UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+				ItemStack stack = player.getItemInHand(hand);
 
-				Optional<BlockState> waxedState = HoneycombItem.getWaxed(state);
+				if (stack.is(Items.RESIN_CLUMP)) {
+					var pos = hitResult.getBlockPos();
+					BlockState state = world.getBlockState(pos);
 
-				if (waxedState.isPresent()) {
-					if (!world.isClientSide()) {
-						world.setBlock(pos, waxedState.get(), 11);
-						world.levelEvent(null, 3003, pos, 0);
+					Optional<BlockState> waxedState = HoneycombItem.getWaxed(state);
 
-						if (!player.isCreative()) {
-							stack.shrink(1);
+					if (waxedState.isPresent()) {
+						if (!world.isClientSide()) {
+							world.setBlock(pos, waxedState.get(), 11);
+							world.levelEvent(null, 3003, pos, 0);
+
+							if (!player.isCreative()) {
+								stack.shrink(1);
+							}
 						}
+						return InteractionResult.SUCCESS;
 					}
-					return InteractionResult.SUCCESS;
 				}
-			}
-			return InteractionResult.PASS;
-		});
+				return InteractionResult.PASS;
+			});
 
-		LOGGER.info("Quite Logical 엔티티 등록 완료!");
+			LOGGER.info("Quite Logical 엔티티 등록 완료!");
+		});
 	}
 }

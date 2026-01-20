@@ -1,4 +1,12 @@
 {
   "block.qlogic.glow_stick": "Glow Stick",
-  "tag.qlogic.nuggets" : "nuggets"
+  "tag.qlogic.nuggets" : "nuggets",
+  "item.qlogic.copper_goat_horn": "Copper Goat Horn",
+  "tooltip.quitelogical.linked_horse": "Linked Horse: %s",
+  "tooltip.quitelogical.no_linked_horse": "No horse linked.",
+  "message.quitelogical.horse_linked": "%s is now linked to the horn!",
+  "message.quitelogical.horse_unlinked": "Unlinked from %s.",
+  "message.quitelogical.only_tamed": "Only tamed horses can be linked.",
+  "message.quitelogical.horse_summoned": "You called %s!",
+  "message.quitelogical.horse_not_found": "Linked horse not found."
 }

@@ -1,4 +1,12 @@
 {
   "block.qlogic.glow_stick": "야광 막대",
-  "tag.qlogic.nuggets" : "금속 조각"
+  "tag.qlogic.nuggets" : "금속 조각",
+  "item.qlogic.copper_goat_horn": "구리 염소 뿔",
+  "tooltip.quitelogical.linked_horse": "등록된 말: %s",
+  "tooltip.quitelogical.no_linked_horse": "등록된 말이 없습니다.",
+  "message.quitelogical.horse_linked": "이제 %s가 뿔에 등록되었습니다!",
+  "message.quitelogical.horse_unlinked": "%s의 등록이 해제되었습니다.",
+  "message.quitelogical.only_tamed": "길들여진 말만 등록할 수 있습니다.",
+  "message.quitelogical.horse_summoned": "%s을(를) 불렀습니다!",
+  "message.quitelogical.horse_not_found": "등록된 말을 찾을 수 없습니다."
 }

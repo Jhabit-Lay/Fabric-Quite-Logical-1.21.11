@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "   ",
+        "cGc",
+        "   "
+    ],
+    "key": {
+        "c": "minecraft:copper_ingot",
+        "G": "minecraft:goat_horn"
+    },
+    "result": {
+        "id": "qlogic:copper_goat_horn",
+        "count": 1
+    }
+}

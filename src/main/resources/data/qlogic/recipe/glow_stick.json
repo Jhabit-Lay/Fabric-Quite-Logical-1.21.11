@@ -1,15 +1,15 @@
 {
-    "type": "minecraft:crafting_shaped",
-    "pattern": [
-        "#",
-        "/"
-    ],
-    "key": {
-        "#": "minecraft:glow_ink_sac",
-        "/": "minecraft:stick"
-    },
-    "result": {
-        "id": "qlogic:glow_stick",
-        "count": 4
-    }
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#",
+    "/"
+  ],
+  "key": {
+    "#": "minecraft:glow_ink_sac",
+    "/": "minecraft:stick"
+  },
+  "result": {
+    "id": "qlogic:glow_stick",
+    "count": 4
+  }
 }

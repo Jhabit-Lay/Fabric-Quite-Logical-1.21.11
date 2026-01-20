@@ -11,7 +11,10 @@
 		"LeaderZombieMixin",
 		"PotionStackMixin",
 		"ItemAccessor",
-		"ArmorStandMixin"
+		"ArmorStandMixin",
+		"HorseModelMixin",
+		"AnvilMenuMixin",
+		"InstrumentItemMixin"
 	],
 	"client": [
 	],
