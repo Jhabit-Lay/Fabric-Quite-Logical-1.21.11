@@ -8,7 +8,9 @@
 		"MinecartSpeedFixMixin",
 		"NewMinecartBehavior",
 		"HGhastAccelMixin",
-		"LeaderZombieMixin"
+		"LeaderZombieMixin",
+		"PotionStackMixin",
+		"ItemAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1
