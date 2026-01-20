@@ -10,7 +10,8 @@
 		"HGhastAccelMixin",
 		"LeaderZombieMixin",
 		"PotionStackMixin",
-		"ItemAccessor"
+		"ItemAccessor",
+		"ArmorStandMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
