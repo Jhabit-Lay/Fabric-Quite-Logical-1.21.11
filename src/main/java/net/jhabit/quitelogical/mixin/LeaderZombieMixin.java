@@ -1,5 +1,6 @@
 package net.jhabit.quitelogical.mixin;
 
+import net.jhabit.quitelogical.QuiteLogical;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
@@ -27,8 +28,8 @@ public abstract class LeaderZombieMixin extends Monster {
         Zombie zombie = (Zombie)(Object)this;
         double reinforcementChance = zombie.getAttributeValue(Attributes.SPAWN_REINFORCEMENTS_CHANCE);
 
-        if (reinforcementChance > 0.1) {
-            // 1. 외형 및 능력치 버프
+        if (zombie.getType() == QuiteLogical.ZOMBIE_LEADER) {
+
             var scaleAttr = zombie.getAttribute(Attributes.SCALE);
             if (scaleAttr != null) scaleAttr.setBaseValue(1.1);
 
@@ -43,10 +44,10 @@ public abstract class LeaderZombieMixin extends Monster {
                 attackDamageAttr.setBaseValue(4.0);
             }
 
-            // 2. 경험치 2배 (바닐라 좀비 기본 5 -> 10)
+            // 2. 경험치 보상
             this.xpReward = 15;
 
-            // 3. 장비 드랍 확률 100% 설정
+            // 3. 장비 드랍 확률 100%
             for (EquipmentSlot slot : EquipmentSlot.values()) {
                 zombie.setDropChance(slot, 1.0F);
             }
@@ -63,10 +64,29 @@ public abstract class LeaderZombieMixin extends Monster {
                     this.level().addParticle(
                             ParticleTypes.FIREWORK,
                             this.getRandomX(0.5),
-                            this.getY() + 0.0, // 발밑(0.0)
+                            this.getY() + 0.1, // 발밑(0.0)
                             this.getRandomZ(0.5),
                             0.0, 0.1, 0.0
                     );
+                }
+            }
+        }
+    }
+    @Inject(method = "isSunSensitive", at = @At("HEAD"), cancellable = true)
+    private void forceSunSensitivity(CallbackInfoReturnable<Boolean> cir) {
+        if (this.getType() == QuiteLogical.ZOMBIE_LEADER) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    // [평화로움 즉시 제거]
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void forcePeacefulRemoval(CallbackInfo ci) {
+        if (!this.level().isClientSide()) {
+            // 난이도가 평화로움이면 즉시 제거
+            if (this.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+                if (this.getType() == QuiteLogical.ZOMBIE_LEADER) {
+                    this.discard();
                 }
             }
         }

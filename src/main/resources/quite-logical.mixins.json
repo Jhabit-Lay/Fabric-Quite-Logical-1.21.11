@@ -13,6 +13,8 @@
 		"ItemAccessor",
 		"ArmorStandMixin"
 	],
+	"client": [
+	],
 	"injectors": {
 		"defaultRequire": 1
 	},

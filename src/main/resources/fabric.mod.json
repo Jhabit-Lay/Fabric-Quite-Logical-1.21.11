@@ -21,9 +21,7 @@
 		"fabric-datagen": [
 			"net.jhabit.quitelogical.QuiteLogicalDataGenerator"
 		],
-		"Client": [
-			"net.jhabit.quitelogical.QuiteLogicalClient"
-		]
+		"client": [ "net.jhabit.quitelogical.QuiteLogicalClient" ]
 	},
 	"mixins": [
 		"quite-logical.mixins.json"

@@ -7,10 +7,17 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRe
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.quitelogical.block.ModBlocks;
 import net.jhabit.quitelogical.items.ModItems;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.item.ItemStack;
@@ -27,10 +34,23 @@ public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	public static final net.minecraft.resources.Identifier ZOMBIE_LEADER_ID =
+			net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "zombie_leader");
+
+	public static final EntityType<Zombie> ZOMBIE_LEADER = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			ZOMBIE_LEADER_ID,
+			EntityType.Builder.<Zombie>of(Zombie::new, MobCategory.MONSTER)
+					.sized(0.6f * 1.1f, 1.95f * 1.1f)
+					.build(ResourceKey.create(Registries.ENTITY_TYPE, ZOMBIE_LEADER_ID))
+	);
+
 	@Override
 	public void onInitialize() {
 		ModBlocks.initialize();
 		ModItems.initialize();
+
+		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(ZOMBIE_LEADER, Zombie.createAttributes());
 
 		// 아이템 그룹 등록
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
@@ -69,6 +89,6 @@ public class QuiteLogical implements ModInitializer {
 			return InteractionResult.PASS;
 		});
 
-		LOGGER.info("Quite Logical (Mojmap) 초기화 완료!");
+		LOGGER.info("Quite Logical 엔티티 등록 완료!");
 	}
 }
