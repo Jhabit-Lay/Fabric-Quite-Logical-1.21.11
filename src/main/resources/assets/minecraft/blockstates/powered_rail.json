@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "minecraft:block/powered_rail"
+    },
+    "powered=true": {
+      "model": "minecraft:block/powered_rail_on"
+    }
+  }
+}
