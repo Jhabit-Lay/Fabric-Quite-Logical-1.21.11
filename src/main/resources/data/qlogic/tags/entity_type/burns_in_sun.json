@@ -1,8 +1,8 @@
 {
   "replace": false,
   "values": [
-    "qlogic:zombie_leader",
     "qlogic:jungle_zombie",
+    "qlogic:zombie_leader",
     "qlogic:frostbite"
   ]
 }

@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "qlogic:jungle_zombie",
-    "qlogic:zombie_leader"
+    "qlogic:zombie_leader",
+    "qlogic:frostbite"
   ]
 }

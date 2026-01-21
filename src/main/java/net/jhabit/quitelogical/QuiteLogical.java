@@ -8,133 +8,142 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.quitelogical.block.ModBlocks;
-import net.jhabit.quitelogical.entity.JungleZombie;
-import net.jhabit.quitelogical.entity.LeaderZombie;
+import net.jhabit.quitelogical.entity.ModEntities;
 import net.jhabit.quitelogical.items.ModItems;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacementTypes;
-import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.animal.cow.Cow;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.equipment.EquipmentAsset;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Optional;
 
-import static net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND;
+import java.util.Optional;
 
 public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static final Identifier ZOMBIE_LEADER_ID =
-			Identifier.fromNamespaceAndPath(MOD_ID, "zombie_leader");
-
-	public static final EntityType<LeaderZombie> ZOMBIE_LEADER = Registry.register(
-			BuiltInRegistries.ENTITY_TYPE,
-			ZOMBIE_LEADER_ID,
-			EntityType.Builder.<LeaderZombie>of(LeaderZombie::new, MobCategory.MONSTER)
-					.sized(0.6f * 1.1f, 1.95f * 1.1f)
-					.build(ResourceKey.create(Registries.ENTITY_TYPE, ZOMBIE_LEADER_ID))
-	);
-
-	public static final Identifier JUNGLE_ZOMBIE_ID =
-			Identifier.fromNamespaceAndPath(MOD_ID, "jungle_zombie");
-
-	public static final EntityType<JungleZombie> JUNGLE_ZOMBIE = Registry.register(
-			BuiltInRegistries.ENTITY_TYPE,
-			JUNGLE_ZOMBIE_ID,
-			EntityType.Builder.<JungleZombie>of(JungleZombie::new, MobCategory.MONSTER)
-					.sized(0.6f, 1.95f * 0.95f)
-					.build(ResourceKey.create(Registries.ENTITY_TYPE, JUNGLE_ZOMBIE_ID))
-	);
-
 	@Override
 	public void onInitialize() {
+		// 1. 핵심 모듈 초기화
 		ModComponents.register();
 		ModBlocks.initialize();
 		ModItems.initialize();
 
-		FabricDefaultAttributeRegistry.register(ZOMBIE_LEADER,
-				Zombie.createAttributes()
-						.add(Attributes.SCALE,1.05)
-						.add(Attributes.MAX_HEALTH, 30.0)
-						.add(Attributes.MOVEMENT_SPEED, 0.23)
-						.add(Attributes.ARMOR_TOUGHNESS, 2)
+		// 2. 엔티티 등록 및 속성 초기화 (ModEntities 내부에서 처리)
+		ModEntities.initialize();
+
+		// 3. 바이옴별 스폰 설정
+		setupSpawns();
+
+		// 4. 바닐라 엔티티 속성 수정
+		registerVanillaAttributeModifiers();
+
+		// 5. 아이템 그룹(크리에이티브 탭) 설정
+		setupItemGroups();
+
+		// 6. 양조 레시피 등록
+		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder ->
+				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
 		);
 
+		// 7. 게임 내 상호작용 이벤트 등록 (레진 밀랍칠)
+		registerEvents();
 
-		FabricDefaultAttributeRegistry.register(JUNGLE_ZOMBIE,
-				Zombie.createAttributes()
-						.add(Attributes.SCALE,0.95)
-						.add(Attributes.MAX_HEALTH, 15.0)   // 일반 좀비(20)보다 낮음
-						.add(Attributes.MOVEMENT_SPEED, 0.29) // 일반 좀비(0.23)보다 빠름
-						.add(Attributes.ARMOR_TOUGHNESS, 0)
-		);
 
+		LOGGER.info("Quite Logical 모드가 성공적으로 로드되었습니다!");
+	}
+
+	private void setupItemGroups() {
+		// 1. 기능 블록 탭 (Functional Blocks): 글로우 스틱 배치
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
+			// 레드스톤 횃불(REDSTONE_TORCH) 바로 뒤에 글로우 스틱 배치
+			entries.addAfter(Items.REDSTONE_TORCH, ModBlocks.GLOW_STICK);
+		});
+
+		// 2. 도구 및 유틸리티 탭 (Tools & Utilities): 금 괭이 뒤에 강철 도구들 나열
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
+			// 염소 뿔(GOAT_HORN) 뒤에 구리 염소 뿔 배치 (자동으로 첫 번째 음반인 13번 음반 앞에 위치함)
+			entries.addAfter(Items.GOAT_HORN, ModItems.COPPER_GOAT_HORN);
+
+			// 금 괭이 뒤에 삽 -> 곡괭이 -> 도끼 -> 괭이 순서로 나열
+			entries.addAfter(Items.GOLDEN_HOE,
+					ModItems.STEEL_SHOVEL,
+					ModItems.STEEL_PICKAXE,
+					ModItems.STEEL_AXE,
+					ModItems.STEEL_HOE
+			);
+		});
+
+		// 3. 전투 탭 (Combat): 금 검 뒤에 강철 검 배치
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
+			// 금 검 뒤에 강철 검 배치
+			entries.addAfter(Items.GOLDEN_SWORD, ModItems.STEEL_SWORD);
+
+			entries.addAfter(Items.GOLDEN_BOOTS,
+					ModItems.STEEL_HELMET,
+					ModItems.STEEL_CHESTPLATE,
+					ModItems.STEEL_LEGGINGS,
+					ModItems.STEEL_BOOTS
+			);
+		});
+
+		// 4. 재료 탭 (Ingredients): 금 원석/주괴 뒤에 배치
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
+			// 금 원석 뒤에 탄화철 배치
+			entries.addAfter(Items.RAW_GOLD, ModItems.CARBONIZED_IRON);
+
+			// 금 주괴 뒤에 강철 주괴 배치
+			entries.addAfter(Items.GOLD_INGOT, ModItems.STEEL_INGOT);
+		});
+	}
+
+
+	// 스폰 셋업
+	private void setupSpawns() {
 		BiomeModifications.addSpawn(
 				BiomeSelectors.includeByKey(Biomes.JUNGLE, Biomes.SPARSE_JUNGLE, Biomes.BAMBOO_JUNGLE),
-				MobCategory.MONSTER,
-				QuiteLogical.JUNGLE_ZOMBIE,
-				140, // 가중치 (일반 좀비는 보통 100)
-				2,  // 최소 그룹 크기
-				4   // 최대 그룹 크기
+				MobCategory.MONSTER, ModEntities.JUNGLE_ZOMBIE, 160, 2, 4
 		);
-		SpawnPlacements.register(
-				QuiteLogical.JUNGLE_ZOMBIE,
-				SpawnPlacementTypes.ON_GROUND, // Type -> PlacementTypes로 변경
-				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-				Monster::checkMonsterSpawnRules
+		BiomeModifications.addSpawn(
+				BiomeSelectors.includeByKey(Biomes.TAIGA, Biomes.FROZEN_PEAKS, Biomes.SNOWY_TAIGA, Biomes.SNOWY_PLAINS),
+				MobCategory.MONSTER, ModEntities.FROSTBITE, 160, 2, 4
 		);
+	}
 
+	private void registerVanillaAttributeModifiers() {
 		FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 1.0));
 		FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 1.0));
-
 		FabricDefaultAttributeRegistry.register(EntityType.BEE, Bee.createAttributes()
 				.add(Attributes.SCALE, 0.7)
 				.add(Attributes.ATTACK_DAMAGE, 2.0));
+	}
 
-		FabricDefaultAttributeRegistry.register(EntityType.COW, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
-		FabricDefaultAttributeRegistry.register(EntityType.MOOSHROOM, Cow.createAttributes().add(Attributes.ATTACK_DAMAGE, 2.0));
+	public static final ResourceKey<EquipmentAsset> STEEL_ARMOR_MATERIAL_KEY
+			= ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "steel"));
 
-		// 아이템 그룹 등록
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
-				.register(entries -> entries.accept(ModBlocks.GLOW_STICK));
 
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> {
-			content.accept(ModItems.COPPER_GOAT_HORN);
-
-			// [오류 해결] 양조 레시피 등록 코드를 메서드 안으로 이동
-		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder ->
-			builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
-			);
-
-			// [레진 밀랍칠 기능 구현]
+	private void registerEvents() {
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			ItemStack stack = player.getItemInHand(hand);
 
 			if (stack.is(Items.RESIN_CLUMP)) {
 				var pos = hitResult.getBlockPos();
 				BlockState state = world.getBlockState(pos);
-
 				Optional<BlockState> waxedState = HoneycombItem.getWaxed(state);
 
 				if (waxedState.isPresent()) {
@@ -150,9 +159,6 @@ public class QuiteLogical implements ModInitializer {
 				}
 			}
 			return InteractionResult.PASS;
-		});
-
-		LOGGER.info("Quite Logical 엔티티 등록 완료!");
 		});
 	}
 }

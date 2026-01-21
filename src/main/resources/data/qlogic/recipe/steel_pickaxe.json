@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "qqq",
+        " / ",
+        " / "
+    ],
+    "key": {
+        "q": "qlogic:steel_ingot",
+        "/": "minecraft:stick"
+    },
+    "result": {
+        "id": "qlogic:steel_pickaxe",
+        "count": 1
+    }
+}
