@@ -1,0 +1,15 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "   ",
+        "q q",
+        "q q"
+    ],
+    "key": {
+        "q": "qlogic:steel_ingot"
+    },
+    "result": {
+        "id": "qlogic:steel_boots",
+        "count": 1
+    }
+}
