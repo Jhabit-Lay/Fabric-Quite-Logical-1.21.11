@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "net.jhabit.quitelogical.mixin",
+	"package": "net.jhabit.qlogic.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"TorchflowerLightMixin",
@@ -17,7 +17,8 @@
 		"ItemCombinerMenuAccessor",
 		"InstrumentItemMixin",
 		"ShieldPositionMixin",
-		"FireOverlayMixin"
+		"FireOverlayMixin",
+		"BundleWeightMixin"
 	],
 	"client": [
 	],

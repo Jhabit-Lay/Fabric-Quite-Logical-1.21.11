@@ -1,7 +1,14 @@
 {
   "layers": {
     "humanoid": [
-      { "texture": "qlogic:steel" }
+      {
+        "texture": "qlogic:steel"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "qlogic:steel"
+      }
     ]
   }
 }

@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "quite-logical",
+	"id": "qlogic",
 	"version": "${version}",
 	"name": "Quite Logical",
 	"description": "Quite..Logical! Expand your vanilla experience with this mod",
@@ -16,12 +16,12 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.jhabit.quitelogical.QuiteLogical"
+			"net.jhabit.qlogic.QuiteLogical"
 		],
 		"fabric-datagen": [
-			"net.jhabit.quitelogical.QuiteLogicalDataGenerator"
+			"net.jhabit.qlogic.QuiteLogicalDataGenerator"
 		],
-		"client": [ "net.jhabit.quitelogical.QuiteLogicalClient" ]
+		"client": [ "net.jhabit.qlogic.QuiteLogicalClient" ]
 	},
 	"mixins": [
 		"quite-logical.mixins.json"
