@@ -18,7 +18,8 @@
 		"InstrumentItemMixin",
 		"ShieldPositionMixin",
 		"FireOverlayMixin",
-		"BundleWeightMixin"
+		"BundleWeightMixin",
+		"ExperienceBarMixin"
 	],
 	"client": [
 	],
