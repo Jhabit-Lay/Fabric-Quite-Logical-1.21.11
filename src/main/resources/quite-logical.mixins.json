@@ -19,7 +19,7 @@
 		"ShieldPositionMixin",
 		"FireOverlayMixin",
 		"BundleWeightMixin",
-		"ExperienceBarMixin"
+		"ExperienceBarMixin",
 	],
 	"client": [
 	],

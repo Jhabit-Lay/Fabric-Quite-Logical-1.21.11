@@ -1,4 +1,4 @@
-package net.jhabit.qlogic;
+package net.jhabit.qlogic.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;

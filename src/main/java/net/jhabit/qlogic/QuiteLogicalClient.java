@@ -1,13 +1,24 @@
 package net.jhabit.qlogic;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.jhabit.qlogic.entity.ModEntities;
+import net.jhabit.qlogic.network.PingPayload;
+import net.jhabit.qlogic.render.WorldMarkerRenderer;
+import net.jhabit.qlogic.util.CompassManager;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.minecraft.client.renderer.entity.state.ZombieRenderState;
 import net.minecraft.resources.Identifier;
+import org.lwjgl.glfw.GLFW;
 
 public class QuiteLogicalClient implements ClientModInitializer {
+
+    public static KeyMapping pingKey;
 
     public static final Identifier LEADER_ZOMBIE_TEXTURE =
             Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/leader_zombie.png");
@@ -49,6 +60,24 @@ public class QuiteLogicalClient implements ClientModInitializer {
                     }
                 }
         );
+
+        // [중요] 클라이언트에서도 S2C(서버->클라이언트) 패킷 구조를 등록해야 합니다.
+        PayloadTypeRegistry.playC2S().register(PingPayload.ID, PingPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(PingPayload.ID, PingPayload.CODEC);
+
+        // 수신 시 CompassManager에 데이터 추가
+        ClientPlayNetworking.registerGlobalReceiver(PingPayload.ID, (payload, context) -> {
+            context.client().execute(() -> CompassManager.addPing(payload.pos()));
+        });
+
+        WorldMarkerRenderer.register();
+
+        pingKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.qlogic.ping",           // 번역 키 (Description)
+                InputConstants.Type.KEYSYM,  // 입력 방식
+                GLFW.GLFW_KEY_V,             // 기본 키값
+                KeyMapping.Category.MISC     // 오류 해결 포인트: String 대신 Category 상수를 사용합니다.
+        ));
 
         QuiteLogical.LOGGER.info("Quite Logical 클라이언트: getTexture 메서드 적용 완료");
     }

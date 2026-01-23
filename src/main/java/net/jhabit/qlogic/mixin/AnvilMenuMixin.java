@@ -1,6 +1,6 @@
 package net.jhabit.qlogic.mixin;
 
-import net.jhabit.qlogic.ForgeHelper;
+import net.jhabit.qlogic.util.ForgeHelper;
 import net.jhabit.qlogic.items.ModItems;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.player.Player;
