@@ -47,14 +47,14 @@ public class ExperienceBarMixin {
         Player player = client.player;
         if (player == null || client.level == null || client.options.hideGui) return;
 
-        // 1. 나침반 데이터 갱신 (영구 마커 리셋 후 인벤토리 재수집)
+        // 나침반 데이터 갱신 (영구 마커 -1L 만 리셋)
         CompassManager.targetMap.entrySet().removeIf(entry -> entry.getValue().expiryTime() == -1L);
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             qlogic$collectCompassData(player.getInventory().getItem(i));
         }
         if (player.containerMenu != null) qlogic$collectCompassData(player.containerMenu.getCarried());
 
-        // 2. 도트 및 이름표 렌더링 (8도 조준 기능 포함)
+        // 경험치 바 위 도트 렌더링 (8도 조준 시 이름 박스 표시 복구)
         int barWidth = 182;
         int barX = (guiGraphics.guiWidth() - barWidth) / 2;
         int barY = guiGraphics.guiHeight() - 27;
@@ -65,7 +65,7 @@ public class ExperienceBarMixin {
             }
         });
 
-        // 3. 망원경 HUD (좌표/거리 박스)
+        // 망원경 HUD 복구 (좌표/거리 박스 배경 포함)
         qlogic$renderSpyglassHUD(guiGraphics, client, deltaTracker);
     }
 
@@ -78,12 +78,11 @@ public class ExperienceBarMixin {
             int dotX = (int) (barX + (barWidth / 2.0F) + (relYaw / 90.0F) * (barWidth / 2.0F));
             int color = (data.expiryTime() != -1L) ? 0xFFFFFFFF : qlogic$getVibrantColor(target);
 
-            // 도트 본체
             graphics.fill(dotX - 2, barY - 2, dotX + 3, barY + 3, 0xFF000000);
             graphics.fill(dotX - 1, barY - 1, dotX + 2, barY + 2, color);
             graphics.fill(dotX, barY, dotX + 1, barY + 1, 0xFFFFFFFF);
 
-            // [복구] 8도 이내 조준 시 이름 박스 표시
+            // [기존 기능 보존] 8도 이내 조준 시 이름표 박스 표시
             if (Math.abs(relYaw) < 8.0F) {
                 MutableComponent text = data.name().copy();
                 if (data.count() > 1) text.append(" x" + data.count());
@@ -114,15 +113,14 @@ public class ExperienceBarMixin {
 
         int centerX = graphics.guiWidth() / 2;
 
-        // 좌표 박스
+        // [복구] 좌표 및 거리 텍스트 박스
         String coords = String.format("X: %.1f / Y: %.1f / Z: %.1f", hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
         qlogic$drawInfoBox(graphics, client, coords, centerX, 10, 0xFFFFFFFF);
 
-        // 거리 박스
         double dist = start.distanceTo(hit.getLocation());
         qlogic$drawInfoBox(graphics, client, String.format("%.1fm", dist), centerX, 22, 0xFF55FFFF);
 
-        // 엔티티 분석 (반올림 포함)
+        // 엔티티 분석 (말 능력치 반올림 포함)
         if (hit instanceof EntityHitResult entHit && entHit.getEntity() instanceof AbstractHorse horse) {
             String speed = String.format("%.1f", horse.getAttributeValue(Attributes.MOVEMENT_SPEED) * 43.17);
             String jump = String.format("%.1f", horse.getAttributeValue(Attributes.JUMP_STRENGTH));
