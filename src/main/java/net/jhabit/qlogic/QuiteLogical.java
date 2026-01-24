@@ -10,6 +10,8 @@ import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.qlogic.block.ModBlocks;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.items.ModItems;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
@@ -18,10 +20,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.animal.cow.Cow;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.HoneycombItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.equipment.EquipmentAsset;
@@ -63,7 +62,6 @@ public class QuiteLogical implements ModInitializer {
 
 		// 7. 게임 내 상호작용 이벤트 등록 (레진 밀랍칠)
 		registerEvents();
-
 
 		LOGGER.info("Quite Logical 모드가 성공적으로 로드되었습니다!");
 	}
@@ -135,7 +133,6 @@ public class QuiteLogical implements ModInitializer {
 
 	public static final ResourceKey<EquipmentAsset> STEEL_ARMOR_MATERIAL_KEY
 			= ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath("qlogic", "steel"));
-
 
 	private void registerEvents() {
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {

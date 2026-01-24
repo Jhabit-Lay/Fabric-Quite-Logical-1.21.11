@@ -27,6 +27,16 @@ public class CopperGoatHornItem extends InstrumentItem {
     }
 
     @Override
+    public Component getName(ItemStack stack) {
+        Component customName = stack.get(ModComponents.LINKED_HORSE_NAME);
+        if (customName != null) {
+            // 말의 이름을 그대로 반환하거나, "말의 이름의 구리 뿔" 등으로 가공 가능합니다.
+            return customName.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC);
+        }
+        return super.getName(stack);
+    }
+
+    @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
         if (entity instanceof AbstractHorse horse && !player.level().isClientSide()) {
             UUID currentLinkedUuid = stack.get(ModComponents.LINKED_HORSE);
@@ -40,6 +50,14 @@ public class CopperGoatHornItem extends InstrumentItem {
 
             if (horse.isTamed()) {
                 stack.set(ModComponents.LINKED_HORSE, clickedHorseUuid);
+
+                // save Horse name if it has "Name tag" Name
+                if (horse.hasCustomName()) {
+                    stack.set(ModComponents.LINKED_HORSE_NAME, horse.getCustomName());
+                } else {
+                    stack.remove(ModComponents.LINKED_HORSE_NAME);
+                }
+
                 player.displayClientMessage(Component.translatable("message.quitelogical.horse_linked", horse.getName()), true);
                 return InteractionResult.SUCCESS;
             } else {
@@ -50,12 +68,11 @@ public class CopperGoatHornItem extends InstrumentItem {
         return super.interactLivingEntity(stack, player, entity, hand);
     }
 
-    // [수정 포인트 1] 반환 타입을 InteractionResultHolder<ItemStack>으로 변경
     @Override
     public @NotNull InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
 
-        // 구리 뿔 사운드 재생
+        // Play Horn Sound
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(0),
                 SoundSource.RECORDS, 3.0F, 1.4F);
@@ -69,7 +86,8 @@ public class CopperGoatHornItem extends InstrumentItem {
                 if (targetEntity instanceof AbstractHorse horse) {
                     float yaw = player.getYRot() * ((float) Math.PI / 180F);
 
-                    // 1. 소환/목적지 좌표 계산
+                    // 1. calc teleport XYZ
+
                     double spawnDist = 3.5;
                     double spawnX = player.getX() + (Math.sin(yaw) * spawnDist);
                     double spawnZ = player.getZ() - (Math.cos(yaw) * spawnDist);
@@ -79,22 +97,22 @@ public class CopperGoatHornItem extends InstrumentItem {
                     double targetX = player.getX() - (Math.sin(yaw) * forwardDist) + (Math.cos(yaw) * sideDist);
                     double targetZ = player.getZ() + (Math.cos(yaw) * forwardDist) + (Math.sin(yaw) * sideDist);
 
-                    // 2. 소환 및 AI 이동 강제
+                    // 2. Force Move ai
                     horse.teleportTo(spawnX, player.getY(), spawnZ);
                     horse.getNavigation().stop();
-                    // moveTo(x, y, z, speed)를 사용하여 명확한 지점으로 이동하게 함
+
+                    // moveTo(x, y, z, speed)
                     horse.getNavigation().moveTo(targetX, player.getY(), targetZ, 1.4D);
 
                     horse.getLookControl().setLookAt(player, 30.0F, 30.0F);
                     horse.makeSound(SoundEvents.HORSE_ANGRY);
 
-                    // 3. 내구도 및 쿨타임 처리
+                    // 3. Durability, Cooldown
                     EquipmentSlot slot = (hand == InteractionHand.MAIN_HAND) ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
                     itemStack.hurtAndBreak(1, player, slot);
+                    player.getCooldowns().addCooldown(itemStack, 140);
 
-                    // [수정 포인트 2] addCooldown이 해결됩니다.
-                    player.getCooldowns().addCooldown(itemStack, 100);
-
+                    // 4. Display Text
                     player.displayClientMessage(Component.translatable("message.quitelogical.horse_summoned", horse.getName()), true);
                 }
             }
@@ -105,8 +123,7 @@ public class CopperGoatHornItem extends InstrumentItem {
         return InteractionResult.CONSUME;
     }
 
-    // [수정 포인트 4] @Override를 붙여서 부모 클래스의 메서드임을 명시
-    // CopperGoatHornItem.java 내부
+    // CopperGoatHornItem.java
     public boolean isValidRepairItem(ItemStack stack, ItemStack ingredient) {
         // ingredient(재료)가 구리 주괴인지 확인합니다.
         return ingredient.is(Items.COPPER_INGOT);
@@ -117,7 +134,7 @@ public class CopperGoatHornItem extends InstrumentItem {
         return stack.has(ModComponents.LINKED_HORSE);
     }
 
-    // [수정 포인트 5] @Override 추가 및 툴팁 시그니처 보정
+
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag type) {
         UUID horseUuid = stack.get(ModComponents.LINKED_HORSE);
         if (horseUuid != null) {

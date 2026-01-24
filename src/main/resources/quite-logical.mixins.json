@@ -22,9 +22,11 @@
 		"ExperienceBarMixin",
 		"MouseMixin",
 		"GameRendererMixin",
-		"ItemMixin"
+		"ItemMixin",
+		"ItemStackMixin"
 	],
 	"client": [
+		"client.GuiMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

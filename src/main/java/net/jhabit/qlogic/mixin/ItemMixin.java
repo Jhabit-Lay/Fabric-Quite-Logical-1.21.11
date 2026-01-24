@@ -8,10 +8,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Item.class)
-public class ItemMixin {
+public abstract class ItemMixin {
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void throwPoisonousPotato(Level level, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
@@ -43,19 +40,19 @@ public class ItemMixin {
                 );
 
                 potatoEntity.setItem(itemStack);
-                // 발사 속도 1.5, 오차 1.0 (눈덩이 표준값)
+                // same throw speed with snowball
                 potatoEntity.shootFromRotation(user, user.getXRot(), user.getYRot(), 0.0f, 1.5f, 1.0f);
                 level.addFreshEntity(potatoEntity);
             }
 
-            // 아이템 소모 로직 (정상 작동 확인됨)
+            // consume item
             if (!user.getAbilities().instabuild) {
                 itemStack.shrink(1);
             }
 
-            user.awardStat(Stats.ITEM_USED.get((Item)(Object)this));
+            user.awardStat(Stats.ITEM_USED.get((Item) (Object) this));
 
-            // 먹기 동작 차단
+            // block eating
             cir.setReturnValue(InteractionResult.SUCCESS);
         }
     }
