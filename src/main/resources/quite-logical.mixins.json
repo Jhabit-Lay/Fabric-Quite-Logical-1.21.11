@@ -20,6 +20,8 @@
 		"FireOverlayMixin",
 		"BundleWeightMixin",
 		"ExperienceBarMixin",
+		"MouseMixin",
+		"GameRendererMixin"
 	],
 	"client": [
 	],

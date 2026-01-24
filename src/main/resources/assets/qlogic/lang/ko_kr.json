@@ -19,7 +19,7 @@
   "text.qlogic.ping_marker": "마커",
   "key.qlogic.ping": "망원경 핑",
   "text.qlogic.horse_stats": "❤ %.0f/%.0f | ⚡ %.1f m/s | ⬆ %.1f",
-  "text.qlogic.honey_level": "🍯 꿀: %d/5",
+  "text.qlogic.beehive_info" : "벌: %d / 꿀: %d/5",
   "category.qlogic.tools": "Quite Logical 도구",
   "tooltip.quitelogical.linked_horse": "등록된 말: %s",
   "tooltip.quitelogical.no_linked_horse": "등록된 말이 없습니다.",

@@ -27,6 +27,7 @@ import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.LodestoneTracker;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.BeehiveBlock;
+import net.minecraft.world.level.block.entity.BeehiveBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.spongepowered.asm.mixin.Mixin;
@@ -78,9 +79,9 @@ public class ExperienceBarMixin {
             int dotX = (int) (barX + (barWidth / 2.0F) + (relYaw / 90.0F) * (barWidth / 2.0F));
             int color = (data.expiryTime() != -1L) ? 0xFFFFFFFF : qlogic$getVibrantColor(target);
 
-            graphics.fill(dotX - 2, barY - 2, dotX + 3, barY + 3, 0xFF000000);
-            graphics.fill(dotX - 1, barY - 1, dotX + 2, barY + 2, color);
-            graphics.fill(dotX, barY, dotX + 1, barY + 1, 0xFFFFFFFF);
+            graphics.fill(dotX - 3, barY - 3, dotX + 4, barY + 4, 0xFF000000);
+            graphics.fill(dotX - 2, barY - 2, dotX + 3, barY + 3, color);
+            graphics.fill(dotX - 1, barY - 1, dotX + 2, barY + 2, 0x80FFFFFF);
 
             // [기존 기능 보존] 8도 이내 조준 시 이름표 박스 표시
             if (Math.abs(relYaw) < 8.0F) {
@@ -112,23 +113,48 @@ public class ExperienceBarMixin {
         if (hit.getType() == HitResult.Type.MISS) return;
 
         int centerX = graphics.guiWidth() / 2;
+        int screenHeight = graphics.guiHeight();
 
-        // [복구] 좌표 및 거리 텍스트 박스
+        // 1단/2단: 좌표 및 거리 표시
         String coords = String.format("X: %.1f / Y: %.1f / Z: %.1f", hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
+
         qlogic$drawInfoBox(graphics, client, coords, centerX, 10, 0xFFFFFFFF);
+        qlogic$drawInfoBox(graphics, client, String.format("%.1fm", start.distanceTo(hit.getLocation())), centerX, 22, 0xFF55FFFF);
 
-        double dist = start.distanceTo(hit.getLocation());
-        qlogic$drawInfoBox(graphics, client, String.format("%.1fm", dist), centerX, 22, 0xFF55FFFF);
+        int zoomY = screenHeight - 60;
+        String zoomText = String.format("Zoom: %.1fx", net.jhabit.qlogic.util.SpyglassZoomManager.getZoomLevel());
 
-        // 엔티티 분석 (말 능력치 반올림 포함)
+        qlogic$drawInfoBox(graphics, client, zoomText, centerX, zoomY, 0xFFFFAA00);
+
+
+        // 3단: 엔티티(말) 또는 블록(벌집) 상세 분석
         if (hit instanceof EntityHitResult entHit && entHit.getEntity() instanceof AbstractHorse horse) {
             String speed = String.format("%.1f", horse.getAttributeValue(Attributes.MOVEMENT_SPEED) * 43.17);
             String jump = String.format("%.1f", horse.getAttributeValue(Attributes.JUMP_STRENGTH));
             String stats = Component.translatable("text.qlogic.horse_stats", (int) horse.getHealth(), (int) horse.getMaxHealth(), speed, jump).getString();
             qlogic$drawInfoBox(graphics, client, stats, centerX, 34, 0xFFFFFFFF);
+        } else if (hit instanceof BlockHitResult blockHit) {
+            BlockPos blockPos = blockHit.getBlockPos();
+            BlockState state = client.level.getBlockState(blockPos);
+
+            // [복구 및 강화] 벌집(Beehive/Bee Nest) 정보 표시
+            if (state.is(BlockTags.BEEHIVES)) {
+                int honey = state.getValue(BeehiveBlock.HONEY_LEVEL);
+                int bees = 0;
+                if (client.level.getBlockEntity(blockPos) instanceof BeehiveBlockEntity beehive) {
+                    bees = beehive.getOccupantCount(); // 현재 들어있는 벌 마릿수
+                }
+                // 🐝 벌 마릿수와 🍯 꿀 단계를 표시
+                String beeInfo = Component.translatable("text.qlogic.beehive_info", bees, honey).getString();
+                qlogic$drawInfoBox(graphics, client, beeInfo, centerX, 34, 0xFFFFFF55);
+
+            }
         }
     }
 
+    /**
+     * [정보 박스 그리기] 텍스트 배경 박스를 포함하여 화면 상단에 정보를 출력합니다.
+     */
     @Unique
     private void qlogic$drawInfoBox(GuiGraphics graphics, Minecraft client, String text, int x, int y, int color) {
         int width = client.font.width(text);
@@ -136,10 +162,12 @@ public class ExperienceBarMixin {
         graphics.drawCenteredString(client.font, text, x, y, color);
     }
 
+    /**
+     * [데이터 수집] 인벤토리와 꾸러미 내부를 재귀적으로 탐색하여 나침반 목표를 수집합니다.
+     */
     @Unique
     private void qlogic$collectCompassData(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return;
-        // [복구] 꾸러미 내부 재귀 탐색
         BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (contents != null) {
             for (ItemStack inner : contents.items()) qlogic$collectCompassData(inner);

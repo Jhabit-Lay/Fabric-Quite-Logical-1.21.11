@@ -19,7 +19,7 @@
   "text.qlogic.ping_marker": "Marker",
   "key.qlogic.ping": "Spyglass Ping",
   "text.qlogic.horse_stats": "❤ %.0f/%.0f | ⚡ %.1f m/s | ⬆ %.1f",
-  "text.qlogic.honey_level": "🍯 Honey: %d/5",
+  "text.qlogic.beehive_info" : "Bees: %d / Honey: %d/5",
   "category.qlogic.tools": "Quite Logical Tools",
   "tooltip.quitelogical.linked_horse": "Linked Horse: %s",
   "tooltip.quitelogical.no_linked_horse": "No horse linked.",
