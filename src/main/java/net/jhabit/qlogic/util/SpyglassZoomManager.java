@@ -8,7 +8,7 @@ public class SpyglassZoomManager {
 
     private static final double MIN_ZOOM = 0.1;
     private static final double MAX_ZOOM = 5.0;
-    private static final double ZOOM_STEP = 0.4; // 한 칸당 이동 거리
+    private static final double ZOOM_STEP = 0.2; // 한 칸당 이동 거리
     private static final double SMOOTHNESS = 0.05; // 낮을수록 더 부드럽고 천천히 이동 (0.05 ~ 0.3 추천)
 
     public static void onScroll(double amount) {
