@@ -187,13 +187,30 @@ public class ExperienceBarMixin {
     private void onRenderHead(GuiGraphics graphics, DeltaTracker delta, CallbackInfo ci) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
+
         while (QuiteLogicalClient.pingKey.consumeClick()) {
             if (client.player.isUsingItem() && client.player.getUseItem().is(Items.SPYGLASS)) {
+
+                // Raycast 128 distance block
                 HitResult hit = client.player.pick(128.0D, 0.0F, false);
                 if (hit instanceof BlockHitResult blockHit) {
                     BlockPos pos = blockHit.getBlockPos();
-                    ClientPlayNetworking.send(new PingPayload(pos));
-                    CompassManager.addPing(pos);
+                    GlobalPos gPos = GlobalPos.of(client.player.level().dimension(), pos);
+
+                    // Add ping if there is no ping, else delete
+                    if (CompassManager.targetMap.containsKey(gPos)) {
+                        CompassManager.targetMap.remove(gPos);
+
+                        // removing ping sound
+                        client.player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5F, -1.0F);
+
+                    } else {
+                        ClientPlayNetworking.send(new PingPayload(pos));
+                        CompassManager.addPing(pos);
+
+                        // ping add sound
+                        client.player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
+                    }
                 }
             }
         }

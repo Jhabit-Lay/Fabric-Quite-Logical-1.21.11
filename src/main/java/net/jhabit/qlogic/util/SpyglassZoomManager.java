@@ -8,12 +8,19 @@ public class SpyglassZoomManager {
 
     private static final double MIN_ZOOM = 0.1;
     private static final double MAX_ZOOM = 5.0;
-    private static final double ZOOM_STEP = 0.2; // 한 칸당 이동 거리
-    private static final double SMOOTHNESS = 0.05; // 낮을수록 더 부드럽고 천천히 이동 (0.05 ~ 0.3 추천)
+    private static final double ZOOM_STEP = 0.2; // scroll per x0.2 zoom
+    private static final double SMOOTHNESS = 0.05; // lower this number makes zoom smoother (0.05 ~ 0.3 추천)
 
     public static void onScroll(double amount) {
-        // 목표 배율만 먼저 변경합니다.
+        // change target zoom first
         targetZoom = Mth.clamp(targetZoom + amount * ZOOM_STEP, MIN_ZOOM, MAX_ZOOM);
+
+        net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
+        if (client.player != null) {
+            // pitch difference zoom in and zoom out
+            float pitch = (float) (1.5F + (targetZoom / MAX_ZOOM) * 0.4F);
+            client.player.playSound(net.minecraft.sounds.SoundEvents.SPYGLASS_STOP_USING, 1.0F, pitch);
+        }
     }
 
     /**

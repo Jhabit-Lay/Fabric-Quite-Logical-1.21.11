@@ -8,61 +8,83 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BeaconRenderer;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class WorldMarkerRenderer {
-    /** 렌더링 시스템에 월드 마커 렌더러를 등록합니다. */
+    // BeaconRenderer.java 소스에 정의된 상수를 그대로 사용합니다.
+    private static final Identifier BEAM_LOCATION = BeaconRenderer.BEAM_LOCATION;
+
     public static void register() {
-        // AFTER_ENTITIES는 엔티티 렌더링 후, 지형을 투과해 그리기에 가장 적합한 시점입니다.
         WorldRenderEvents.AFTER_ENTITIES.register(WorldMarkerRenderer::renderMarkers);
     }
 
     private static void renderMarkers(WorldRenderContext context) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null) return;
+        if (client.player == null || client.level == null) return;
 
-        // 사용자 스크린샷에서 확인된 matrices()와 consumers() 사용
+        // [해결] WorldRenderContext 소스 기반: matrices, consumers, commandQueue 사용
         PoseStack matrices = context.matrices();
         MultiBufferSource consumers = context.consumers();
+        SubmitNodeCollector commandQueue = context.commandQueue();
 
-        // Camera.java 소스 기반: position() 및 rotation() 메서드 호출
-        Camera camera = context.gameRenderer().getMainCamera();
+        // [요청 사항 반영] Minecraft.java 소스의 public 필드 gameRenderer를 통해 카메라 접근
+        Camera camera = client.gameRenderer.getMainCamera();
         Vec3 cameraPos = camera.position();
-        Font font = client.font;
+
+        // [해결] getTimer() 대신 Minecraft.java의 getDeltaTracker() 사용
+        // partialTick을 구하기 위해 getGameTimeDeltaPartialTick(false)를 호출합니다.
+        float partialTick = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        long worldTime = client.level.getGameTime();
 
         CompassManager.targetMap.forEach((pos, data) -> {
-            // 핑 마커(expiryTime != -1)이고 같은 차원(Overworld 등)일 때만 렌더링
             if (data.expiryTime() != -1L && client.player.level().dimension().equals(pos.dimension())) {
+
+                // --- 1. 신호기 빔(Beacon Beam) 렌더링 ---
+                // [해결] BeaconRenderer.java 소스의 10개 인수 submitBeaconBeam 호출
                 matrices.pushPose();
+                double bx = pos.pos().getX() - cameraPos.x;
+                double by = pos.pos().getY() - cameraPos.y;
+                double bz = pos.pos().getZ() - cameraPos.z;
+                matrices.translate(bx, by, bz);
 
-                // 1. 월드 좌표를 카메라 기준 상대 좌표로 변환하여 이동 (블록 중심)
-                double x = pos.pos().getX() + 0.5 - cameraPos.x;
-                double y = pos.pos().getY() + 1.2 - cameraPos.y;
-                double z = pos.pos().getZ() + 0.5 - cameraPos.z;
-                matrices.translate(x, y, z);
+                // 인자(10개): poseStack, submitNodeCollector, identifier, f(scale), g(time), i(yOffset), j(height), k(color), h(innerR), l(outerR)
+                BeaconRenderer.submitBeaconBeam(
+                        matrices,                               // 1. PoseStack
+                        commandQueue,                           // 2. SubmitNodeCollector
+                        BEAM_LOCATION,                          // 3. Identifier
+                        1.0F,                                   // 4. f (beamRadiusScale)
+                        (float)worldTime + partialTick,         // 5. g (animationTime)
+                        0,                                      // 6. i (yOffset)
+                        2048,                                   // 7. j (height / MAX_RENDER_Y)
+                        0xFFFFFFFF,                             // 8. k (color - White)
+                        0.2F,                                   // 9. h (innerRadius / SOLID_BEAM_RADIUS)
+                        0.25F                                   // 10. l (outerRadius / BEAM_GLOW_RADIUS)
+                );
+                matrices.popPose();
 
-                // 2. 빌보드 회전: 카메라의 현재 회전값 적용 (항상 플레이어를 바라봄)
+                // --- 2. 3D 월드 마커 및 거리 텍스트 렌더링 ---
+                matrices.pushPose();
+                double mx = pos.pos().getX() + 0.5 - cameraPos.x;
+                double my = pos.pos().getY() + 1.2 - cameraPos.y;
+                double mz = pos.pos().getZ() + 0.5 - cameraPos.z;
+                matrices.translate(mx, my, mz);
+
+                // [요청 사항 반영] camera.rotation() 사용
                 matrices.mulPose(camera.rotation());
 
-                // 3. 거리 계산 및 정수 변환
                 double dist = client.player.getEyePosition().distanceTo(Vec3.atCenterOf(pos.pos()));
-
-                // 거리에 상관없이 마커 크기를 일정하게 유지하기 위한 스케일 조정
-                float scale = (float) (0.025f * (Math.max(1.0, dist / 10.0)));
+                float scale = (float) (0.025f * (Math.max(1.0, dist / 12.0)));
                 matrices.scale(-scale, -scale, scale);
+
                 Matrix4f matrix = matrices.last().pose();
-
-                // 4. [요청 사항] 소수점 없는 실수(정수) 거리 텍스트
                 String distText = (int) dist + "m";
-                int textWidth = font.width(distText);
 
-                // 5. 렌더링: SEE_THROUGH 모드로 벽 너머에서도 가시성 확보
-                // 마커 점 (▪)
-                font.drawInBatch("▪", -font.width("▪") / 2f, 0, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0xFF000000, 15728880);
-
-                // 거리 텍스트 및 반투명 배경 (마커 위 12픽셀 위치)
-                font.drawInBatch(distText, -textWidth / 2f, -12, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0x90000000, 15728880);
+                client.font.drawInBatch("▪", -client.font.width("▪") / 2f, 0, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0, 15728880);
+                client.font.drawInBatch(distText, -client.font.width(distText) / 2f, -12, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0x90000000, 15728880);
 
                 matrices.popPose();
             }

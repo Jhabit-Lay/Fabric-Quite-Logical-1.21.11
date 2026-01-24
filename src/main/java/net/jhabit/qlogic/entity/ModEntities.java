@@ -33,6 +33,10 @@ public class ModEntities {
                 builder.build(ResourceKey.create(Registries.ENTITY_TYPE, id)));
     }
 
+    public static final EntityType<ThrownPoisonousPotato> THROWN_POISONOUS_POTATO = register("thrown_poisonous_potato",
+            EntityType.Builder.<ThrownPoisonousPotato>of(ThrownPoisonousPotato::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F));
+
     public static void initialize() {
         // 속성 등록
         FabricDefaultAttributeRegistry.register(ZOMBIE_LEADER, Zombie.createAttributes()

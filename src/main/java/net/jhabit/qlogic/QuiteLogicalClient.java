@@ -6,11 +6,13 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.impl.client.rendering.EntityRendererRegistryImpl;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.network.PingPayload;
 import net.jhabit.qlogic.render.WorldMarkerRenderer;
 import net.jhabit.qlogic.util.CompassManager;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.minecraft.client.renderer.entity.state.ZombieRenderState;
 import net.minecraft.resources.Identifier;
@@ -78,6 +80,8 @@ public class QuiteLogicalClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_V,             // 기본 키값
                 KeyMapping.Category.MISC     // 오류 해결 포인트: String 대신 Category 상수를 사용합니다.
         ));
+
+        EntityRendererRegistryImpl.register(ModEntities.THROWN_POISONOUS_POTATO, ThrownItemRenderer::new);
 
         QuiteLogical.LOGGER.info("Quite Logical 클라이언트: getTexture 메서드 적용 완료");
     }
