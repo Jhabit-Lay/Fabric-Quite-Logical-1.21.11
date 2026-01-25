@@ -23,8 +23,7 @@
 		"ItemMixin",
 		"ItemStackMixin",
 		"CampfireRegenerationMixin",
-		"CrawlMixin",
-		"PlayerMixin",
+		"QuiteLogicalPlayerMixin",
 		"ControlsOptionsScreenMixin",
 		"OptionsMixin",
 		"HorseGuiMixin"

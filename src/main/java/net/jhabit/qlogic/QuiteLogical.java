@@ -5,13 +5,20 @@ import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.qlogic.block.ModBlocks;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.items.ModItems;
+import net.jhabit.qlogic.mixin.QuiteLogicalPlayerMixin;
+import net.jhabit.qlogic.network.CrawlPayload;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
@@ -20,11 +27,10 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.equipment.EquipmentAsset;
-import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
@@ -35,6 +41,8 @@ import java.util.Optional;
 public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	public static final EntityDataAccessor<Boolean> QLOGIC$CRAWLING = SynchedEntityData.defineId(Player.class, EntityDataSerializers.BOOLEAN);
 
 	@Override
 	public void onInitialize() {
@@ -63,6 +71,17 @@ public class QuiteLogical implements ModInitializer {
 		// 7. 게임 내 상호작용 이벤트 등록 (레진 밀랍칠)
 		registerEvents();
 
+		// 8. SyncedData
+		PayloadTypeRegistry.playC2S().register(CrawlPayload.TYPE, CrawlPayload.CODEC);
+
+		// 그 다음에 리시버를 등록합니다.
+		ServerPlayNetworking.registerGlobalReceiver(CrawlPayload.TYPE, (payload, context) -> {
+			context.server().execute(() -> {
+				context.player().getEntityData().set(QLOGIC$CRAWLING, payload.isCrawling());
+				context.player().refreshDimensions();
+			});
+		});
+
 		LOGGER.info("Quite Logical 모드가 성공적으로 로드되었습니다!");
 	}
 
@@ -78,7 +97,9 @@ public class QuiteLogical implements ModInitializer {
 			entries.addAfter(Items.GOAT_HORN, ModItems.COPPER_GOAT_HORN);
 		});
 	}
-	
+
+
+
 	// 스폰 셋업
 	private void setupSpawns() {
 		BiomeModifications.addSpawn(

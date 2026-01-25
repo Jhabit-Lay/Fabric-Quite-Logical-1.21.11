@@ -13,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(AbstractEquineModel.class)
 public abstract class HorseModelMixin<S extends EquineRenderState> {
 
-    // [수정] root 대신 실제 존재하는 head 필드를 Shadow 합니다.
-    // AbstractEquineModel에 이미 head가 정의되어 있으므로 이를 그대로 사용합니다.
     @Shadow
     @Final
     protected ModelPart headParts;
