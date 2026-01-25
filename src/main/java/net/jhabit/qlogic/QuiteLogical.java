@@ -67,50 +67,18 @@ public class QuiteLogical implements ModInitializer {
 	}
 
 	private void setupItemGroups() {
-		// 1. 기능 블록 탭 (Functional Blocks): 글로우 스틱 배치
+		// 1. 기능 블록 탭 (Functional Blocks)
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
 			// 레드스톤 횃불(REDSTONE_TORCH) 바로 뒤에 글로우 스틱 배치
 			entries.addAfter(Items.REDSTONE_TORCH, ModBlocks.GLOW_STICK);
 		});
-
-		// 2. 도구 및 유틸리티 탭 (Tools & Utilities): 금 괭이 뒤에 강철 도구들 나열
+		// 2. 도구 및 유틸리티 탭
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			// 염소 뿔(GOAT_HORN) 뒤에 구리 염소 뿔 배치 (자동으로 첫 번째 음반인 13번 음반 앞에 위치함)
 			entries.addAfter(Items.GOAT_HORN, ModItems.COPPER_GOAT_HORN);
-
-			// 금 괭이 뒤에 삽 -> 곡괭이 -> 도끼 -> 괭이 순서로 나열
-			entries.addAfter(Items.GOLDEN_HOE,
-					ModItems.STEEL_SHOVEL,
-					ModItems.STEEL_PICKAXE,
-					ModItems.STEEL_AXE,
-					ModItems.STEEL_HOE
-			);
-		});
-
-		// 3. 전투 탭 (Combat): 금 검 뒤에 강철 검 배치
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
-			// 금 검 뒤에 강철 검 배치
-			entries.addAfter(Items.GOLDEN_SWORD, ModItems.STEEL_SWORD);
-
-			entries.addAfter(Items.GOLDEN_BOOTS,
-					ModItems.STEEL_HELMET,
-					ModItems.STEEL_CHESTPLATE,
-					ModItems.STEEL_LEGGINGS,
-					ModItems.STEEL_BOOTS
-			);
-		});
-
-		// 4. 재료 탭 (Ingredients): 금 원석/주괴 뒤에 배치
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
-			// 금 원석 뒤에 탄화철 배치
-			entries.addAfter(Items.RAW_GOLD, ModItems.CARBONIZED_IRON);
-
-			// 금 주괴 뒤에 강철 주괴 배치
-			entries.addAfter(Items.GOLD_INGOT, ModItems.STEEL_INGOT);
 		});
 	}
-
-
+	
 	// 스폰 셋업
 	private void setupSpawns() {
 		BiomeModifications.addSpawn(
@@ -130,9 +98,6 @@ public class QuiteLogical implements ModInitializer {
 				.add(Attributes.SCALE, 0.7)
 				.add(Attributes.ATTACK_DAMAGE, 2.0));
 	}
-
-	public static final ResourceKey<EquipmentAsset> STEEL_ARMOR_MATERIAL_KEY
-			= ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath("qlogic", "steel"));
 
 	private void registerEvents() {
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {

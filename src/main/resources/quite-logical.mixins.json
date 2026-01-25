@@ -13,8 +13,6 @@
 		"ItemAccessor",
 		"ArmorStandMixin",
 		"HorseModelMixin",
-		"AnvilMenuMixin",
-		"ItemCombinerMenuAccessor",
 		"InstrumentItemMixin",
 		"ShieldPositionMixin",
 		"FireOverlayMixin",

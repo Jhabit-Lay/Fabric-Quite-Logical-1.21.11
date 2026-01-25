@@ -212,14 +212,14 @@ public abstract class ExperienceBarMixin {
             String speed = String.format("%.1f", horse.getAttributeValue(Attributes.MOVEMENT_SPEED) * 43.17);
             String jump = String.format("%.1f", horse.getAttributeValue(Attributes.JUMP_STRENGTH));
             String stats = Component.translatable("text.qlogic.horse_stats", (int) horse.getHealth(), (int) horse.getMaxHealth(), speed, jump).getString();
-            qlogic$drawInfoBox(graphics, client, stats, centerX, 30, 0xFFFFFFFF, 0.75f);
+            qlogic$drawInfoBox(graphics, client, stats, centerX, 28, 0xFFFFFFFF, 0.75f);
         } else if (hit instanceof BlockHitResult blockHit) {
             BlockPos blockPos = blockHit.getBlockPos();
             BlockState state = client.level.getBlockState(blockPos);
             if (state.is(BlockTags.BEEHIVES)) {
                 int honey = state.getValue(BeehiveBlock.HONEY_LEVEL);
                 int bees = (client.level.getBlockEntity(blockPos) instanceof BeehiveBlockEntity beehive) ? beehive.getOccupantCount() : 0;
-                qlogic$drawInfoBox(graphics, client, Component.translatable("text.qlogic.beehive_info", bees, honey).getString(), centerX, 30, 0xFFFFFF55, 0.75f);
+                qlogic$drawInfoBox(graphics, client, Component.translatable("text.qlogic.beehive_info", bees, honey).getString(), centerX, 28, 0xFFFFFF55, 0.75f);
             }
         }
 
