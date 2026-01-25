@@ -1,8 +1,17 @@
 accessWidener v2 named
 
-# Options 클래스 및 내부 인터페이스를 public으로 개방
-accessible class net/minecraft/client/Options$FieldAccess
-accessible class net/minecraft/client/Options$OptionAccess
+# 1. 내부 클래스 및 인터페이스 개방 (Inner classes)
+# 클래스 자체를 개방하면 내부 메서드들에 대한 접근 권한 검증을 우회할 수 있습니다.
 accessible class net/minecraft/client/gui/Gui$ContextualInfo
+accessible class net/minecraft/client/Options$FieldAccess
 
-accessible method net/minecraft/client/Options$FieldAccess process (Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+# 2. Gui 메서드 개방 (반드시 필요한 쉐도우 메서드들)
+accessible method net/minecraft/client/gui/Gui willPrioritizeExperienceInfo ()Z
+accessible method net/minecraft/client/gui/Gui willPrioritizeJumpInfo ()Z
+accessible method net/minecraft/client/gui/Gui getPlayerVehicleWithHealth ()Lnet/minecraft/world/entity/LivingEntity;
+accessible method net/minecraft/client/gui/Gui getVehicleMaxHearts (Lnet/minecraft/world/entity/LivingEntity;)I
+accessible method net/minecraft/client/gui/Gui renderFood (Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/entity/player/Player;II)V
+
+# 3. Options$FieldAccess (메서드 정의 없이 클래스만 개방)
+# 이 설정만으로도 OptionsMixin에서 fieldAccess.process() 호출이 가능해집니다.
+accessible class net/minecraft/client/Options$FieldAccess
