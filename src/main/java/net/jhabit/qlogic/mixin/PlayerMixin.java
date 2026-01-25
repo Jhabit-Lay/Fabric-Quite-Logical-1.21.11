@@ -49,9 +49,16 @@ public abstract class PlayerMixin {
         Player player = (Player) (Object) this;
         if (player.isPassenger()) return false;
 
+        if (player.isPassenger()) {
+            QuiteLogicalClient.isCrawlingToggled = false; // 타는 순간 토글을 강제로 끔
+            return false;
+        }
+
         if (QuiteLogicalClient.crawlToggleOption.get()) {
             return QuiteLogicalClient.isCrawlingToggled;
         }
         return QuiteLogicalClient.crawlKey.isDown();
+
+
     }
 }
