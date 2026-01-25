@@ -28,7 +28,8 @@
 		"CrawlMixin",
 		"PlayerMixin",
 		"ControlsOptionsScreenMixin",
-		"OptionsMixin"
+		"OptionsMixin",
+		"HorseGuiMixin"
 	],
 	"client": [
 		"client.GuiMixin"
