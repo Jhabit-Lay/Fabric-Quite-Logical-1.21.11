@@ -23,7 +23,12 @@
 		"MouseMixin",
 		"GameRendererMixin",
 		"ItemMixin",
-		"ItemStackMixin"
+		"ItemStackMixin",
+		"CampfireRegenerationMixin",
+		"CrawlMixin",
+		"PlayerMixin",
+		"ControlsOptionsScreenMixin",
+		"OptionsMixin"
 	],
 	"client": [
 		"client.GuiMixin"

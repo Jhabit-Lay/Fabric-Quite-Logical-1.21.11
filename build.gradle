@@ -24,6 +24,11 @@ fabricApi {
 	}
 }
 
+loom {
+	// AW 파일의 경로를 정확히 지정해야 합니다.
+	accessWidenerPath = file("src/main/resources/qlogic.accesswidener")
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"

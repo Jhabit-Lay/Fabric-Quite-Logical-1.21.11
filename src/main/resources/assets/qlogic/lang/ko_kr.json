@@ -18,6 +18,8 @@
   "item.qlogic.copper_goat_horn": "구리 염소 뿔",
   "text.qlogic.ping_marker": "마커",
   "key.qlogic.ping": "망원경 핑",
+  "key.qlogic.crawl": "엎드리기",
+  "options.qlogic.crawl_toggle": "엎드리기 홀드",
   "text.qlogic.horse_stats": "❤ %.0f/%.0f | ⚡ %.1f m/s | ⬆ %.1f",
   "text.qlogic.beehive_info" : "벌: %d / 꿀: %d/5",
   "category.qlogic.tools": "Quite Logical 도구",

@@ -18,6 +18,8 @@
   "item.qlogic.steel_boots": "Steel Boots",
   "text.qlogic.ping_marker": "Marker",
   "key.qlogic.ping": "Spyglass Ping",
+  "key.qlogic.crawl": "Crawl",
+  "options.qlogic.crawl_toggle": "Crawl Toggle",
   "text.qlogic.horse_stats": "❤ %.0f/%.0f | ⚡ %.1f m/s | ⬆ %.1f",
   "text.qlogic.beehive_info" : "Bees: %d / Honey: %d/5",
   "category.qlogic.tools": "Quite Logical Tools",

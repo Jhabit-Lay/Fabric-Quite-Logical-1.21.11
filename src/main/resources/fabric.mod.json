@@ -2,6 +2,7 @@
 	"schemaVersion": 1,
 	"id": "qlogic",
 	"version": "${version}",
+	"accessWidener": "qlogic.accesswidener",
 	"name": "Quite Logical",
 	"description": "Quite..Logical! Expand your vanilla experience with this mod",
 	"authors": [
