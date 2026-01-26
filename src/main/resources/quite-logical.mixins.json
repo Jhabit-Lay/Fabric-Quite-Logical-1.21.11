@@ -29,7 +29,8 @@
 		"HorseGuiMixin",
 		"PlayerInventoryMixin",
 		"ItemTooltipMixin",
-		"AnvilMenuMixin"
+		"AnvilMenuMixin",
+		"RespawnHistoryMixin"
 	],
 	"client": [
 		"client.GuiMixin"

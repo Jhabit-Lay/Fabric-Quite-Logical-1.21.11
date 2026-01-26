@@ -25,5 +25,6 @@
   "message.quitelogical.horse_unlinked": "Unlinked from %s.",
   "message.quitelogical.only_tamed": "Only tamed horses can be linked.",
   "message.quitelogical.horse_summoned": "You called %s!",
-  "message.quitelogical.horse_not_found": "Linked horse not found."
+  "message.quitelogical.horse_not_found": "Linked horse not found.",
+  "chat.qlogic.respawn_fallback": "Your most recent bed was destroyed. Awakening at a previous sanctuary..."
 }
