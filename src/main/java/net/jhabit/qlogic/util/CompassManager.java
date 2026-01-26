@@ -1,6 +1,6 @@
 package net.jhabit.qlogic.util;
 
-import net.jhabit.qlogic.CompassData;
+import net.jhabit.qlogic.util.CompassData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;

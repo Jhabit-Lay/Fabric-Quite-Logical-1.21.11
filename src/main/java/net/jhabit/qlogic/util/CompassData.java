@@ -1,4 +1,4 @@
-package net.jhabit.qlogic;
+package net.jhabit.qlogic.util;
 
 import net.minecraft.network.chat.Component;
 

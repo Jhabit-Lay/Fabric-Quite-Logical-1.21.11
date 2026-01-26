@@ -1,9 +1,10 @@
 package net.jhabit.qlogic.mixin;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.jhabit.qlogic.CompassData;
+import net.jhabit.qlogic.util.CompassData;
 import net.jhabit.qlogic.QuiteLogicalClient;
 import net.jhabit.qlogic.network.PingPayload;
+import net.jhabit.qlogic.network.RemovePingPayload;
 import net.jhabit.qlogic.util.CompassManager;
 import net.jhabit.qlogic.util.SpyglassZoomManager;
 import net.minecraft.client.DeltaTracker;
@@ -54,11 +55,13 @@ public abstract class ExperienceBarMixin {
     @Shadow protected abstract boolean willPrioritizeExperienceInfo();
     @Shadow protected abstract boolean willPrioritizeJumpInfo();
 
-    // Flag: Player has a compass in inventory
+    // [KR] 인벤토리 내 아이템 존재 여부 플래그 / [EN] Flags for items in inventory
     @Unique private boolean qlogic$hasAnyCompass = false;
+    @Unique private boolean qlogic$hasClock = false;
 
     /**
-     * Check if XP bar is needed for Gain/Anvil/Enchant
+     * [KR] 경험치 바가 강제로 표시되어야 하는 상황인지 확인 (모루, 인챈트 등)
+     * [EN] Check if XP bar should be forced (Anvil, Enchantment, etc.)
      */
     @Unique
     private boolean qlogic$isXpBarActive() {
@@ -70,51 +73,52 @@ public abstract class ExperienceBarMixin {
     }
 
     /**
-     * Show XP Level number logic
+     * [KR] 경험치 레벨 숫자를 렌더링할지 결정하는 로직 리다이렉트
+     * [EN] Redirect logic to decide whether to render the XP level number
      */
     @Redirect(
             method = "renderHotbarAndDecorations",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/contextualbar/ContextualBarRenderer;renderExperienceLevel(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;I)V")
     )
     private void qlogic$redirectXpLevel(GuiGraphics guiGraphics, Font font, int level) {
-        // Show level if: No compass OR gaining XP OR compass exists but no active waypoints
+        // [KR] 나침반이 없거나, 경험치가 중요하거나, 마커가 없을 때만 숫자 표시
+        // [EN] Show level if: No compass OR XP is priority OR no markers exist
         if (!this.qlogic$hasAnyCompass || qlogic$isXpBarActive() || CompassManager.targetMap.isEmpty()) {
             ContextualBarRenderer.renderExperienceLevel(guiGraphics, font, level);
         }
     }
 
     /**
-     * Set HUD priority: Experience > Jump > Locator
+     * [KR] 하단 바(경험치/점프/나침반)의 우선순위를 조정
+     * [EN] Adjust the priority of the bottom bar (XP/Jump/Locator)
      */
     @Inject(method = "nextContextualInfoState", at = @At("RETURN"), cancellable = true)
     private void qlogic$adjustContextualBar(CallbackInfoReturnable<Gui.ContextualInfo> cir) {
-        // Use vanilla logic if no compass
-        if (!this.qlogic$hasAnyCompass) return;
+        Minecraft client = Minecraft.getInstance();
+        // [KR] 나침반이 없거나 크리에이티브 모드면 개입하지 않음 (버그 방지)
+        // [EN] Do not intervene if no compass or in Creative mode (prevents XP bar bug)
+        if (!this.qlogic$hasAnyCompass || (client.player != null && client.player.isCreative())) return;
 
-        // Force XP Bar if recently gained XP or using tables
         if (qlogic$isXpBarActive()) {
             cir.setReturnValue(Gui.ContextualInfo.EXPERIENCE);
             return;
         }
 
-        // Show Jump Bar if charging
         if (this.willPrioritizeJumpInfo()) {
             cir.setReturnValue(Gui.ContextualInfo.JUMPABLE_VEHICLE);
             return;
         }
 
-        // Show Locator ONLY if there are registered lodestones
+        // [KR] 등록된 로드스톤 마커가 있을 때만 나침반 바(LOCATOR)로 전환
+        // [EN] Switch to Locator bar only if lodestone markers are registered
         if (!CompassManager.targetMap.isEmpty()) {
             cir.setReturnValue(Gui.ContextualInfo.LOCATOR);
-        }
-        // Else: Revert to Experience Bar (even with compass)
-        else {
-            cir.setReturnValue(Gui.ContextualInfo.EXPERIENCE);
         }
     }
 
     /**
-     * Head render: Collect data and handle pings
+     * [KR] 렌더링 시작 시 데이터 수집 및 핑 처리
+     * [EN] Data collection and Ping handling at the start of rendering
      */
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderHead(GuiGraphics graphics, DeltaTracker delta, CallbackInfo ci) {
@@ -123,27 +127,34 @@ public abstract class ExperienceBarMixin {
         if (player == null) return;
 
         this.qlogic$hasAnyCompass = false;
+        this.qlogic$hasClock = false;
+
+        // [KR] 만료된 핑 제거 / [EN] Remove expired pings
         CompassManager.targetMap.entrySet().removeIf(entry -> entry.getValue().expiryTime() == -1L);
 
-        // Scan inventory for compasses and bundles
+        // [KR] 인벤토리 전수 조사 (나침반, 시계, 꾸러미 내부)
+        // [EN] Scan entire inventory (Compass, Clock, inside Bundles)
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             qlogic$collectCompassData(player.getInventory().getItem(i));
         }
         if (player.containerMenu != null) qlogic$collectCompassData(player.containerMenu.getCarried());
 
-        // Spyglass ping handling
+        // [KR] 망원경 핑(Ping) 단축키 처리 / [EN] Handle Spyglass Ping hotkey
         while (QuiteLogicalClient.pingKey.consumeClick()) {
             if (client.player.isUsingItem() && client.player.getUseItem().is(Items.SPYGLASS)) {
-                HitResult hit = client.player.pick(128.0D, 0.0F, false);
+                HitResult hit = client.player.pick(160.0D, 0.0F, false);
                 if (hit instanceof BlockHitResult blockHit) {
                     BlockPos pos = blockHit.getBlockPos();
                     GlobalPos gPos = GlobalPos.of(client.player.level().dimension(), pos);
+
                     if (CompassManager.targetMap.containsKey(gPos)) {
-                        CompassManager.targetMap.remove(gPos);
+                        // [KR] 제거 패킷 전송 / [EN] Send removal packet
+                        ClientPlayNetworking.send(new RemovePingPayload(pos));
                         client.player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5F, -1.0F);
                     } else {
-                        ClientPlayNetworking.send(new PingPayload(pos));
-                        CompassManager.addPing(pos);
+                        // [KR] 수정: 플레이어 이름을 포함하여 패킷 전송
+                        // [EN] Fix: Send packet including player name
+                        ClientPlayNetworking.send(new PingPayload(pos, player.getName().getString()));
                         client.player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
                     }
                 }
@@ -153,7 +164,8 @@ public abstract class ExperienceBarMixin {
     }
 
     /**
-     * Tail render: Custom HUD elements
+     * [KR] 렌더링 종료 시 커스텀 HUD(좌표, 시간, 마커) 출력
+     * [EN] Render custom HUD (Coords, Time, Markers) at the end of rendering
      */
     @Inject(method = "render", at = @At("TAIL"))
     private void injectAllHUDLogic(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
@@ -161,12 +173,14 @@ public abstract class ExperienceBarMixin {
         Player player = client.player;
         if (player == null || client.level == null || client.options.hideGui) return;
 
-        // Show Coords only if compass is present
-        if (this.qlogic$hasAnyCompass) {
+        // [KR] 나침반이나 시계가 있으면 좌표/시간 HUD 출력
+        // [EN] Render Coords/Time HUD if compass or clock is present
+        if (this.qlogic$hasAnyCompass || this.qlogic$hasClock) {
             qlogic$renderBedrockCoords(guiGraphics, client, player);
         }
 
-        // Show Markers only if waypoints exist
+        // [KR] 나침반 바 위 마커 점(Dot) 렌더링
+        // [EN] Render marker dots on the locator bar
         if (this.qlogic$hasAnyCompass && !CompassManager.targetMap.isEmpty()) {
             int barX = (guiGraphics.guiWidth() - 182) / 2;
             int barY = guiGraphics.guiHeight() - 27;
@@ -176,44 +190,56 @@ public abstract class ExperienceBarMixin {
                 }
             });
         }
-
         qlogic$renderSpyglassHUD(guiGraphics, client, deltaTracker);
     }
 
     /**
-     * Bedrock-style HUD logic (User customized)
+     * [KR] 베드락 스타일 좌표 및 시간 렌더링
+     * [EN] Render Bedrock-style Coordinates and Time
      */
     @Unique
     private void qlogic$renderBedrockCoords(GuiGraphics graphics, Minecraft client, Player player) {
-        int x = Mth.floor(player.getX());
-        int y = Mth.floor(player.getY());
-        int z = Mth.floor(player.getZ());
-
-        String coordsText = Component.translatable("text.qlogic.xyz", x, y, z).getString();
-        Direction dir = player.getDirection();
-        String directionText = Component.translatable("text.qlogic.facing", Component.translatable("text.qlogic.direction." + dir.getName().toLowerCase())).getString();
-
         graphics.pose().pushMatrix();
-        // Position: User defined (5, 30)
         graphics.pose().translate(5.0F, 30.0F);
-        // Scale: User defined (0.8x)
         graphics.pose().scale(0.8F);
 
-        // Draw Text: Coords first (0,0), then Facing (0,10)
-        graphics.drawString(client.font, directionText, 0, 0, 0xFFFFFFFF);
-        graphics.drawString(client.font, coordsText, 0, 10, 0xFFFFFFFF);
+        int currentY = 0; // [KR] 다음 텍스트 줄 위치 / [EN] Next text line position
 
+        if (this.qlogic$hasAnyCompass) {
+            int x = Mth.floor(player.getX());
+            int y = Mth.floor(player.getY());
+            int z = Mth.floor(player.getZ());
+            String coordsText = Component.translatable("text.qlogic.xyz", x, y, z).getString();
+            Direction dir = player.getDirection();
+            String directionText = Component.translatable("text.qlogic.facing", Component.translatable("text.qlogic.direction." + dir.getName().toLowerCase())).getString();
 
+            graphics.drawString(client.font, directionText, 0, currentY, 0xFFFFFFFF);
+            currentY += 10;
+            graphics.drawString(client.font, coordsText, 0, currentY, 0xFFFFFFFF);
+            currentY += 10;
+        }
+
+        if (this.qlogic$hasClock) {
+            long gameTime = player.level().getDayTime();
+            long totalMinutes = (gameTime + 6000) % 24000;
+            int hours = (int) (totalMinutes / 1000) % 24;
+            int minutes = (int) ((totalMinutes % 1000) * 60 / 1000);
+            String timeText = String.format("%02d:%02d", hours, minutes);
+
+            // [KR] 나침반이 없으면 0번 줄에, 있으면 좌표 아래 줄에 자동 배치
+            // [EN] Automatically placed on line 0 if no compass, or below coords if present
+            graphics.drawString(client.font, timeText, 0, currentY, 0xFFFFFFFF);
+        }
         graphics.pose().popMatrix();
     }
 
     /**
-     * Spyglass analysis HUD
+     * [KR] 망원경 정보 분석 HUD (거리, 엔티티 스탯, 벌통 등)
+     * [EN] Spyglass analysis HUD (Distance, Entity stats, Beehives, etc.)
      */
     @Unique
     private void qlogic$renderSpyglassHUD(GuiGraphics graphics, Minecraft client, DeltaTracker delta) {
         if (!(client.player.isUsingItem() && client.player.getUseItem().is(Items.SPYGLASS))) return;
-
         float partialTicks = delta.getGameTimeDeltaPartialTick(false);
         Entity camera = client.getCameraEntity();
         if (camera == null) return;
@@ -252,7 +278,7 @@ public abstract class ExperienceBarMixin {
     }
 
     /**
-     * Draw text with background box
+     * [KR] 중앙 정보 박스 그리기 도움 함수 / [EN] Helper function to draw info boxes
      */
     @Unique
     private void qlogic$drawInfoBox(GuiGraphics graphics, Minecraft client, String text, int x, int y, int color, float scale) {
@@ -266,7 +292,8 @@ public abstract class ExperienceBarMixin {
     }
 
     /**
-     * Render waypoint marker dots
+     * [KR] 나침반 바 위의 마커 점 및 이름 렌더링
+     * [EN] Render marker dots and names on the locator bar
      */
     @Unique
     private void qlogic$renderMarker(GuiGraphics graphics, Minecraft client, Player player, GlobalPos target, CompassData data, int barX, int barY, int barWidth) {
@@ -278,6 +305,9 @@ public abstract class ExperienceBarMixin {
             graphics.fill(dotX - 3, barY - 3, dotX + 4, barY + 4, 0xFF000000);
             graphics.fill(dotX - 2, barY - 2, dotX + 3, barY + 3, color);
             graphics.fill(dotX - 1, barY - 1, dotX + 2, barY + 2, 0x80FFFFFF);
+
+            // [KR] 중앙에 가깝거나 탭(Tab) 키를 누르면 이름 표시
+            // [EN] Show name if close to center or Tab key is held
             if (Math.abs(relYaw) < 8.0F || client.options.keyPlayerList.isDown()) {
                 MutableComponent text = data.name().copy();
                 if (data.count() > 1) text.append(" x" + data.count());
@@ -289,23 +319,31 @@ public abstract class ExperienceBarMixin {
     }
 
     /**
-     * Scan items for compass and lodestone data
+     * [KR] 아이템 스캔 로직 (나침반, 시계, 꾸러미, 로드스톤 정보 수집)
+     * [EN] Item scan logic (Collect Compass, Clock, Bundle, and Lodestone data)
      */
     @Unique
     private void qlogic$collectCompassData(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return;
+
+        // [KR] 나침반 및 시계 보유 여부 확인 / [EN] Check for Compass and Clock
         if (stack.is(Items.COMPASS)) this.qlogic$hasAnyCompass = true;
+        if (stack.is(Items.CLOCK)) this.qlogic$hasClock = true;
+
+        // [KR] 꾸러미 내부 아이템 재귀 스캔 / [EN] Recursively scan items inside Bundles
         BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (contents != null) for (ItemStack inner : contents.items()) qlogic$collectCompassData(inner);
+
+        // [KR] 로드스톤 나침반 위치 데이터 수집 / [EN] Collect Lodestone Compass position data
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker != null && tracker.target().isPresent()) {
             CompassManager.targetMap.merge(tracker.target().get(), new CompassData(stack.getHoverName(), 1, -1L),
                     (old, val) -> new CompassData(old.name(), old.count() + 1, -1L));
         }
     }
-
     /**
-     * Generate color from position
+     * [KR] 좌표 기반으로 마커의 고유 색상 생성
+     * [EN] Generate a unique color for the marker based on coordinates
      */
     @Unique
     private int qlogic$getVibrantColor(GlobalPos pos) {

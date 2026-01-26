@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -12,16 +13,22 @@ import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.qlogic.block.ModBlocks;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.items.ModItems;
+import net.jhabit.qlogic.mixin.CopperGolemAccessor;
 import net.jhabit.qlogic.network.CrawlPayload;
+import net.jhabit.qlogic.network.PingPayload;
+import net.jhabit.qlogic.network.RemovePingPayload;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.animal.golem.CopperGolem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.alchemy.Potions;
@@ -41,41 +48,57 @@ public class QuiteLogical implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// 1. 핵심 모듈 초기화
 		ModComponents.register();
 		ModBlocks.initialize();
 		ModItems.initialize();
-
-		// 2. 엔티티 등록 및 속성 초기화 (ModEntities 내부에서 처리)
 		ModEntities.initialize();
 
-		// 3. 바이옴별 스폰 설정
 		setupSpawns();
-
-		// 4. 바닐라 엔티티 속성 수정
 		registerVanillaAttributeModifiers();
-
-		// 5. 아이템 그룹(크리에이티브 탭) 설정
 		setupItemGroups();
 
-		// 6. 양조 레시피 등록
 		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder ->
 				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
 		);
 
-		// 7. 게임 내 상호작용 이벤트 등록
-		registerEvents();		// resin Wax
+		registerEvents();
 
-		// 8. SyncedData
+		// --- [1] 패킷 타입 등록 (C2S/S2C 공통) / Packet Type Registration ---
+		PayloadTypeRegistry.playC2S().register(PingPayload.TYPE, PingPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(PingPayload.TYPE, PingPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RemovePingPayload.TYPE, RemovePingPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(RemovePingPayload.TYPE, RemovePingPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(CrawlPayload.TYPE, CrawlPayload.CODEC);
 
-
-
-		// 그 다음에 리시버를 등록합니다.
-		ServerPlayNetworking.registerGlobalReceiver(CrawlPayload.TYPE, (payload, context) -> {
+		// --- [2] 핑(Ping) 서버 수신기 / Ping Server Receiver ---
+		ServerPlayNetworking.registerGlobalReceiver(PingPayload.TYPE, (payload, context) -> {
 			context.server().execute(() -> {
-				context.player().getEntityData().set(QLOGIC$CRAWLING, payload.isCrawling());
-				context.player().refreshDimensions();
+				for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
+					ServerPlayNetworking.send(p, payload); // [KR] 모든 플레이어에게 브로드캐스트 / [EN] Broadcast to all
+				}
+				// [KR] 핑 위치에서 소리 재생 / [EN] Play sound at ping location
+				context.player().level().playSound(null, payload.pos(),
+						SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5f, 0.5f);
+			});
+		});
+
+		// --- [3] 핑 제거 서버 수신기 / Ping Remove Server Receiver ---
+		ServerPlayNetworking.registerGlobalReceiver(RemovePingPayload.TYPE, (payload, context) -> {
+			context.server().execute(() -> {
+				for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
+					ServerPlayNetworking.send(p, payload);
+				}
+			});
+		});
+
+		// --- [4] 엎드리기(Crawl) 서버 수신기 / Crawl Server Receiver ---
+		ServerPlayNetworking.registerGlobalReceiver(CrawlPayload.TYPE, (payload, context) -> {
+			ServerPlayer player = context.player();
+			context.server().execute(() -> {
+				// [KR] 서버 측 데이터 업데이트 및 포즈 강제 설정
+				// [EN] Update server-side data and force pose
+				player.getEntityData().set(QLOGIC$CRAWLING, payload.isCrawling());
+				player.setPose(payload.isCrawling() ? Pose.SWIMMING : Pose.STANDING);
 			});
 		});
 
@@ -94,7 +117,6 @@ public class QuiteLogical implements ModInitializer {
 			entries.addAfter(Items.GOAT_HORN, ModItems.COPPER_GOAT_HORN);
 		});
 	}
-
 
 	// Spawn setup
 	private void setupSpawns() {
@@ -117,9 +139,9 @@ public class QuiteLogical implements ModInitializer {
 	}
 
 	private void registerEvents() {
+		// --- 1. 블록 밀랍칠 로직 (기존 유지) ---
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			ItemStack stack = player.getItemInHand(hand);
-
 			if (stack.is(Items.RESIN_CLUMP)) {
 				var pos = hitResult.getBlockPos();
 				BlockState state = world.getBlockState(pos);
@@ -129,10 +151,44 @@ public class QuiteLogical implements ModInitializer {
 					if (!world.isClientSide()) {
 						world.setBlock(pos, waxedState.get(), 11);
 						world.levelEvent(null, 3003, pos, 0);
+						if (!player.isCreative()) stack.shrink(1);
+					}
+					return InteractionResult.SUCCESS;
+				}
+			}
+			return InteractionResult.PASS;
+		});
 
-						if (!player.isCreative()) {
-							stack.shrink(1);
-						}
+		// --- 2. 구리 골렘 밀랍칠 및 도끼 회수 로직 ---
+		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+			ItemStack stack = player.getItemInHand(hand);
+
+			if (entity instanceof CopperGolem golem) {
+				CopperGolemAccessor accessor = (CopperGolemAccessor) golem;
+
+				// [Case A] 레진으로 밀랍칠하기
+				if (stack.is(Items.RESIN_CLUMP)) {
+					if (accessor.getNextWeatheringTick() == -2L) return InteractionResult.PASS;
+					if (!world.isClientSide()) {
+						accessor.setNextWeatheringTick(-2L);
+						world.levelEvent(null, 3003, entity.blockPosition(), 0);
+						if (!player.isCreative()) stack.shrink(1);
+					}
+					return InteractionResult.SUCCESS;
+				}
+
+				// [Case B] 도끼로 밀랍 벗기기 (레진 드롭 로직 제거됨)
+				if (stack.is(net.minecraft.tags.ItemTags.AXES) && accessor.getNextWeatheringTick() == -2L) {
+					if (!world.isClientSide()) {
+						accessor.setNextWeatheringTick(-1L);
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+								net.minecraft.sounds.SoundEvents.AXE_WAX_OFF, net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+						world.levelEvent(null, 3004, entity.blockPosition(), 0);
+
+						// 내구도 소모 로직 유지
+						EquipmentSlot slot = (hand == net.minecraft.world.InteractionHand.MAIN_HAND)
+								? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
+						stack.hurtAndBreak(1, player, slot);
 					}
 					return InteractionResult.SUCCESS;
 				}

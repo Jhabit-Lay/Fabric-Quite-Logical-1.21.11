@@ -14,56 +14,71 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PlayerInventoryMixin {
 
     /**
-     * [업무 처리] 1.21.11 꾸러미 시스템에 맞춘 자동 아이템 수집 로직
+     * [KR] 1.21.11 서버/클라이언트 공용 아이템 수집 로직 보강
+     * [EN] Enhanced item collection logic for 1.21.11 Server/Client
      */
-    @Inject(method = "add(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
-    private void onAdd(ItemStack pickedUpStack, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "add(ILnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
+    private void qlogic$onAddWithSlot(int slot, ItemStack pickedUpStack, CallbackInfoReturnable<Boolean> cir) {
         if (pickedUpStack.isEmpty()) return;
 
         Inventory inventory = (Inventory) (Object) this;
 
-        // 1 & 2. 인벤토리를 순회하며 꾸러미(Bundle)가 있는지 확인
+        // [KR] 1차 순회: 동일한 아이템이 이미 들어있는 꾸러미를 먼저 채웁니다 (Tidy Mode)
+        // [EN] 1st pass: Fill bundles that already contain the same item (Tidy Mode)
+        if (qlogic$tryFillBundles(inventory, pickedUpStack, true)) {
+            if (pickedUpStack.isEmpty()) {
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
+        // [KR] 2차 순회: 남은 아이템을 빈 공간이 있는 아무 꾸러미에나 순서대로 넣습니다 (Greedy Mode)
+        // [EN] 2nd pass: Fill any available bundles with space (Greedy Mode)
+        if (qlogic$tryFillBundles(inventory, pickedUpStack, false)) {
+            if (pickedUpStack.isEmpty()) {
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
+        // [KR] 이후 과정은 자연스럽게 원래의 인벤토리 삽입 로직(Default)으로 진행됨
+    }
+
+    /**
+     * [KR] 꾸러미 삽입 처리 공통 로직
+     */
+    private boolean qlogic$tryFillBundles(Inventory inventory, ItemStack targetStack, boolean mustMatch) {
+        boolean modified = false;
+
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack slotStack = inventory.getItem(i);
 
             if (slotStack.getItem() instanceof BundleItem) {
-                // 3 & 4. 꾸러미 내용물(BundleContents) 및 용량 확인
                 BundleContents contents = slotStack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
 
-                // 5. 중복된 아이템이 꾸러미 안에 있는지 확인 (Record의 items() 리스트 활용)
-                boolean hasDuplicate = false;
-                for (ItemStack innerStack : contents.items()) {
-                    if (ItemStack.isSameItemSameComponents(innerStack, pickedUpStack)) {
-                        hasDuplicate = true;
-                        break;
+                // [KR] 중복 체크 모드일 경우 내용물 확인
+                if (mustMatch) {
+                    boolean hasDuplicate = false;
+                    for (ItemStack inner : contents.items()) {
+                        if (ItemStack.isSameItemSameComponents(inner, targetStack)) {
+                            hasDuplicate = true;
+                            break;
+                        }
                     }
+                    if (!hasDuplicate) continue;
                 }
 
-                // 중복된 아이템이 있는 꾸러미를 찾았을 때만 실행
-                if (hasDuplicate) {
-                    // 1.21.11 핵심: Mutable 객체를 생성하여 수정을 준비함
-                    BundleContents.Mutable mutable = new BundleContents.Mutable(contents);
+                // [KR] Mutable 객체를 통한 삽입 시도
+                BundleContents.Mutable mutable = new BundleContents.Mutable(contents);
+                int inserted = mutable.tryInsert(targetStack);
 
-                    // 6. tryInsert를 통해 용량이 허용하는 만큼 삽입 시도
-                    // 이 메서드는 내부적으로 용량을 계산하고 pickedUpStack의 개수를 줄임
-                    int insertedCount = mutable.tryInsert(pickedUpStack);
-
-                    if (insertedCount > 0) {
-                        // 변경된 내용을 다시 Immutable(Record)로 변환하여 아이템에 적용
-                        slotStack.set(DataComponents.BUNDLE_CONTENTS, mutable.toImmutable());
-
-                        // 아이템이 꾸러미에 모두 들어갔다면(개수가 0이 됨) 원래 로직 중단 및 성공 반환
-                        if (pickedUpStack.isEmpty()) {
-                            cir.setReturnValue(true);
-                            return;
-                        }
-                        // 아직 아이템이 남아있다면(가득 참), 다음 중복 아이템이 있는 꾸러미를 계속 찾음
-                    }
+                if (inserted > 0) {
+                    slotStack.set(DataComponents.BUNDLE_CONTENTS, mutable.toImmutable());
+                    modified = true;
+                    if (targetStack.isEmpty()) break;
                 }
             }
         }
-
-        // 7. 중복 아이템이 없거나 모든 꾸러미가 가득 차서 들어갈 공간이 없는 경우,
-        // 자연스럽게 원래의 인벤토리 삽입 로직(Default)으로 진행됨
+        return modified;
     }
 }

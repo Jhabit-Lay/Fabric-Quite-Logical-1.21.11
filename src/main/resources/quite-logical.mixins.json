@@ -6,7 +6,6 @@
 		"TorchflowerLightMixin",
 		"CowEntityMixin",
 		"MinecartSpeedFixMixin",
-		"NewMinecartBehavior",
 		"HGhastAccelMixin",
 		"LeaderZombieMixin",
 		"PotionStackMixin",
@@ -29,7 +28,12 @@
 		"HorseGuiMixin",
 		"PlayerInventoryMixin",
 		"ItemTooltipMixin",
-		"AnvilMenuMixin"
+		"AnvilMenuMixin",
+		"RespawnHistoryMixin",
+		"NewMinecartBehaviorMixin",
+		"CopperGolemAccessor",
+		"PoisonousPotatoMixin",
+		"EntityTypeUpdateMixin"
 	],
 	"client": [
 		"client.GuiMixin"

@@ -25,5 +25,6 @@
   "message.quitelogical.horse_unlinked": "%s의 등록이 해제되었습니다.",
   "message.quitelogical.only_tamed": "길들여진 말만 등록할 수 있습니다.",
   "message.quitelogical.horse_summoned": "%s을(를) 불렀습니다!",
-  "message.quitelogical.horse_not_found": "등록된 말을 찾을 수 없습니다."
+  "message.quitelogical.horse_not_found": "등록된 말을 찾을 수 없습니다.",
+  "chat.qlogic.respawn_fallback": "최근 침대가 파괴되었습니다. 이전의 안식처에서 부활합니다."
 }
