@@ -17,6 +17,7 @@
   "text.qlogic.direction.south": "South (+Z)",
   "text.qlogic.direction.west": "West (-X)",
   "text.qlogic.direction.east": "East (+X)",
+  "text.qlogic.bundle_capacity": "%s / %s",
   "category.qlogic.tools": "Quite Logical Tools",
   "tooltip.quitelogical.linked_horse": "Linked Horse: %s",
   "tooltip.quitelogical.no_linked_horse": "No horse linked.",

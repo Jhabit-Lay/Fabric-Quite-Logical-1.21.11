@@ -12,15 +12,10 @@ import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.jhabit.qlogic.block.ModBlocks;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.items.ModItems;
-import net.jhabit.qlogic.mixin.QuiteLogicalPlayerMixin;
 import net.jhabit.qlogic.network.CrawlPayload;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -68,11 +63,13 @@ public class QuiteLogical implements ModInitializer {
 				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.POISONOUS_POTATO), Potions.POISON)
 		);
 
-		// 7. 게임 내 상호작용 이벤트 등록 (레진 밀랍칠)
-		registerEvents();
+		// 7. 게임 내 상호작용 이벤트 등록
+		registerEvents();		// resin Wax
 
 		// 8. SyncedData
 		PayloadTypeRegistry.playC2S().register(CrawlPayload.TYPE, CrawlPayload.CODEC);
+
+
 
 		// 그 다음에 리시버를 등록합니다.
 		ServerPlayNetworking.registerGlobalReceiver(CrawlPayload.TYPE, (payload, context) -> {
@@ -99,8 +96,7 @@ public class QuiteLogical implements ModInitializer {
 	}
 
 
-
-	// 스폰 셋업
+	// Spawn setup
 	private void setupSpawns() {
 		BiomeModifications.addSpawn(
 				BiomeSelectors.includeByKey(Biomes.JUNGLE, Biomes.SPARSE_JUNGLE, Biomes.BAMBOO_JUNGLE),

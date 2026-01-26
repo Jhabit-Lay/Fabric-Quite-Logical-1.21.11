@@ -26,7 +26,10 @@
 		"QuiteLogicalPlayerMixin",
 		"ControlsOptionsScreenMixin",
 		"OptionsMixin",
-		"HorseGuiMixin"
+		"HorseGuiMixin",
+		"PlayerInventoryMixin",
+		"ItemTooltipMixin",
+		"AnvilMenuMixin"
 	],
 	"client": [
 		"client.GuiMixin"

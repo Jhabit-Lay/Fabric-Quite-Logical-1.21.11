@@ -17,6 +17,7 @@
   "text.qlogic.direction.west": "서 (-X)",
   "text.qlogic.direction.south": "남 (+Z)",
   "text.qlogic.direction.north": "북 (-Z)",
+  "text.qlogic.bundle_capacity": "%s / %s",
   "category.qlogic.tools": "Quite Logical 도구",
   "tooltip.quitelogical.linked_horse": "등록된 말: %s",
   "tooltip.quitelogical.no_linked_horse": "등록된 말이 없습니다.",
