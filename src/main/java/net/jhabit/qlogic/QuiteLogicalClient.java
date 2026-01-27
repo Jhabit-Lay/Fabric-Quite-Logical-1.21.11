@@ -12,6 +12,7 @@ import net.jhabit.qlogic.network.CrawlPayload;
 import net.jhabit.qlogic.network.PingPayload;
 import net.jhabit.qlogic.network.RemovePingPayload;
 import net.jhabit.qlogic.render.WorldMarkerRenderer;
+import net.jhabit.qlogic.util.CompassData;
 import net.jhabit.qlogic.util.CompassManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.OptionInstance;
@@ -46,71 +47,49 @@ public class QuiteLogicalClient implements ClientModInitializer {
             (value) -> isCrawlingToggled = false
     );
 
-    // --- [2] 텍스처 경로 정의 / Texture Identifiers ---
-    public static final Identifier LEADER_ZOMBIE_TEXTURE =
-            Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/leader_zombie.png");
-    public static final Identifier JUNGLE_ZOMBIE_TEXTURE =
-            Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/jungle_zombie.png");
-    public static final Identifier FROSTBITE_TEXTURE =
-            Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/frostbite.png");
+    // --- [2] 텍스처 경로 정의 (1.21.11 스타일 Identifier.of 사용) / Texture Identifiers ---
+    public static final Identifier LEADER_ZOMBIE_TEXTURE = Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/leader_zombie.png");
+    public static final Identifier JUNGLE_ZOMBIE_TEXTURE = Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/jungle_zombie.png");
+    public static final Identifier FROSTBITE_TEXTURE = Identifier.fromNamespaceAndPath(QuiteLogical.MOD_ID, "textures/entity/zombie/frostbite.png");
 
     @Override
     public void onInitializeClient() {
-
+        // [KR] 상태 변화 시에만 패킷을 보내기 위한 변수 / [EN] Variable for sending packets only on state change
         final boolean[] lastCrawlState = {false};
 
         // --- [3] 키바인드 등록 / Keybinding Registration ---
-        pingKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.qlogic.ping",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_V,
-                KeyMapping.Category.MISC
-        ));
+        pingKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qlogic.ping", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, KeyMapping.Category.MISC));
+        crawlKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qlogic.crawl", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, KeyMapping.Category.MOVEMENT));
 
-        crawlKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.qlogic.crawl",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_Z,
-                KeyMapping.Category.MOVEMENT
-        ));
-
-        // --- [4] 엎드리기 로직 틱 이벤트 / Crawl Logic Tick Event ---
+        // --- [4] 엎드리기 로직 및 서버 동기화 패킷 전송 / Crawl Logic and Sync Packet ---
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
             if (crawlToggleOption.get()) {
-                while (crawlKey.consumeClick()) {
-                    isCrawlingToggled = !isCrawlingToggled;
-                }
+                while (crawlKey.consumeClick()) isCrawlingToggled = !isCrawlingToggled;
             } else {
                 isCrawlingToggled = crawlKey.isDown();
             }
 
-            // [핵심] 상태가 바뀌었을 때만 서버로 패킷 전송
-            // [EN] Send packet only when state changes
             if (isCrawlingToggled != lastCrawlState[0]) {
                 ClientPlayNetworking.send(new CrawlPayload(isCrawlingToggled));
                 lastCrawlState[0] = isCrawlingToggled;
             }
         });
 
-        // --- [5] 밀랍 탐지기 로직 / Wax Detector Visuals ---
+        // --- [5] 밀랍 탐지기 시각 효과 (기존 로직 유지) / Wax Detector Particle Visuals ---
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null || client.isPaused()) return;
 
-            // [KR] 벌집이나 레진을 들고 있을 때만 주변 스캔
-            // [EN] Scan surroundings only when holding Honeycomb or Resin Clump
             boolean isHoldingIndicator = client.player.isHolding(Items.HONEYCOMB) || client.player.isHolding(Items.RESIN_CLUMP);
-
             if (isHoldingIndicator) {
                 BlockPos pPos = client.player.blockPosition();
 
-                // [KR] 주변 블록 스캔: 이미 밀랍칠된 블록에서 입자 생성
-                // [EN] Block Scan: Spawn particles on blocks that are already waxed
+                // 주변 블록 스캔 (반경 6블록)
                 for (BlockPos pos : BlockPos.betweenClosed(pPos.offset(-6, -2, -6), pPos.offset(6, 4, 6))) {
                     BlockState state = client.level.getBlockState(pos);
                     if (HoneycombItem.WAX_OFF_BY_BLOCK.get().containsKey(state.getBlock())) {
-                        if (client.level.random.nextFloat() < 0.05f) { // [KR] 반짝임 빈도 조절 / [EN] Adjust sparkle frequency
+                        if (client.level.random.nextFloat() < 0.05f) {
                             client.level.addParticle(ParticleTypes.WAX_ON,
                                     pos.getX() + client.level.random.nextDouble(),
                                     pos.getY() + client.level.random.nextDouble(),
@@ -119,8 +98,7 @@ public class QuiteLogicalClient implements ClientModInitializer {
                     }
                 }
 
-                // [KR] 주변 골렘 스캔: 밀랍칠된 골렘(-2L 상태) 탐색
-                // [EN] Golem Scan: Detect waxed Copper Golems (state -2L)
+                // 주변 구리 골렘 스캔
                 for (Entity entity : client.level.entitiesForRendering()) {
                     if (entity instanceof CopperGolem golem && entity.distanceTo(client.player) < 8) {
                         if (((CopperGolemAccessor)golem).getNextWeatheringTick() == -2L) {
@@ -137,19 +115,28 @@ public class QuiteLogicalClient implements ClientModInitializer {
         // --- [6] 엔티티 렌더러 등록 / Entity Renderer Registration ---
         qlogic$registerEntityRenderers();
 
-        // --- [7] 네트워킹 수신기 등록 / Networking Receivers ---
-        // [KR] 핑 추가 수신: 다른 플레이어의 핑을 나침반 바에 표시
-        // [EN] Ping Add: Display other players' pings on the locator bar
+        // --- [7] 네트워킹 수신기 등록 (오류 해결 지점) / Networking Receivers ---
+        // [KR] 핑 추가 수신: 서버에서 받은 고유 색상(payload.color)을 포함하여 4개의 인자를 전달
+        // [EN] Ping Add: Pass 4 arguments including the unique color (payload.color) from server
         ClientPlayNetworking.registerGlobalReceiver(PingPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
+                if (context.client().level == null) return;
                 GlobalPos gPos = GlobalPos.of(context.client().level.dimension(), payload.pos());
+
+                // [KR] net.jhabit.qlogic.util.CompassData를 명시적으로 사용하여 패키지 충돌 해결
+                // [EN] Explicitly use net.jhabit.qlogic.util.CompassData to resolve package conflict
                 CompassManager.targetMap.put(gPos, new net.jhabit.qlogic.util.CompassData(
-                        Component.literal(payload.senderName()), 1, System.currentTimeMillis() + 10000L));
+                        Component.literal(payload.senderName()),
+                        1,
+                        payload.color(),
+                        System.currentTimeMillis() + 60000L));
             });
         });
 
+        // [KR] 핑 제거 수신 로직 / [EN] Ping Removal Logic
         ClientPlayNetworking.registerGlobalReceiver(RemovePingPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
+                if (context.client().level == null) return;
                 GlobalPos gPos = GlobalPos.of(context.client().level.dimension(), payload.pos());
                 CompassManager.targetMap.remove(gPos);
             });

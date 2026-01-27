@@ -6,6 +6,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
+/**
+ * [KR] 핑 삭제 요청을 담는 패킷 페이로드
+ * [EN] Packet payload for requesting ping removal
+ */
 public record RemovePingPayload(BlockPos pos) implements CustomPacketPayload {
     public static final Type<RemovePingPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath("qlogic", "remove_ping"));
 

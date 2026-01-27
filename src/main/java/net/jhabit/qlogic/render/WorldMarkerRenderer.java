@@ -15,10 +15,12 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class WorldMarkerRenderer {
-    // BeaconRenderer.java 소스에 정의된 상수를 그대로 사용합니다.
+    // [KR] 신호기 빔 텍스처 경로 / [EN] Beacon beam texture location
     private static final Identifier BEAM_LOCATION = BeaconRenderer.BEAM_LOCATION;
 
     public static void register() {
+        // [KR] 엔티티 렌더링 이후 단계에 마커 렌더링 등록
+        // [EN] Register marker rendering after entity rendering stage
         WorldRenderEvents.AFTER_ENTITIES.register(WorldMarkerRenderer::renderMarkers);
     }
 
@@ -26,43 +28,41 @@ public class WorldMarkerRenderer {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) return;
 
-        // [해결] WorldRenderContext 소스 기반: matrices, consumers, commandQueue 사용
         PoseStack matrices = context.matrices();
         MultiBufferSource consumers = context.consumers();
         SubmitNodeCollector commandQueue = context.commandQueue();
 
-        // [요청 사항 반영] Minecraft.java 소스의 public 필드 gameRenderer를 통해 카메라 접근
         Camera camera = client.gameRenderer.getMainCamera();
         Vec3 cameraPos = camera.position();
 
-        // [해결] getTimer() 대신 Minecraft.java의 getDeltaTracker() 사용
-        // partialTick을 구하기 위해 getGameTimeDeltaPartialTick(false)를 호출합니다.
         float partialTick = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         long worldTime = client.level.getGameTime();
 
         CompassManager.targetMap.forEach((pos, data) -> {
+            // [KR] 만료되지 않았고 동일한 차원에 있는 마커만 렌더링 (자석석 마커는 빔을 그리지 않음)
+            // [EN] Only render markers that haven't expired and are in the same dimension (Lodestones don't draw beams)
             if (data.expiryTime() != -1L && client.player.level().dimension().equals(pos.dimension())) {
 
+                int userColor = data.color();
+
                 // --- 1. 신호기 빔(Beacon Beam) 렌더링 ---
-                // [해결] BeaconRenderer.java 소스의 10개 인수 submitBeaconBeam 호출
                 matrices.pushPose();
                 double bx = pos.pos().getX() - cameraPos.x;
                 double by = pos.pos().getY() - cameraPos.y;
                 double bz = pos.pos().getZ() - cameraPos.z;
                 matrices.translate(bx, by, bz);
 
-                // 인자(10개): poseStack, submitNodeCollector, identifier, f(scale), g(time), i(yOffset), j(height), k(color), h(innerR), l(outerR)
                 BeaconRenderer.submitBeaconBeam(
-                        matrices,                               // 1. PoseStack
-                        commandQueue,                           // 2. SubmitNodeCollector
-                        BEAM_LOCATION,                          // 3. Identifier
-                        1.0F,                                   // 4. f (beamRadiusScale)
-                        (float)worldTime + partialTick,         // 5. g (animationTime)
-                        0,                                      // 6. i (yOffset)
-                        2048,                                   // 7. j (height / MAX_RENDER_Y)
-                        0xFFFFFFFF,                             // 8. k (color - White)
-                        0.2F,                                   // 9. h (innerRadius / SOLID_BEAM_RADIUS)
-                        0.25F                                   // 10. l (outerRadius / BEAM_GLOW_RADIUS)
+                        matrices,
+                        commandQueue,
+                        BEAM_LOCATION,
+                        1.0F,
+                        (float) worldTime + partialTick,
+                        0,
+                        2048,
+                        userColor,
+                        0.15F,
+                        0.2F
                 );
                 matrices.popPose();
 
@@ -73,7 +73,6 @@ public class WorldMarkerRenderer {
                 double mz = pos.pos().getZ() + 0.5 - cameraPos.z;
                 matrices.translate(mx, my, mz);
 
-                // [요청 사항 반영] camera.rotation() 사용
                 matrices.mulPose(camera.rotation());
 
                 double dist = client.player.getEyePosition().distanceTo(Vec3.atCenterOf(pos.pos()));
@@ -83,8 +82,8 @@ public class WorldMarkerRenderer {
                 Matrix4f matrix = matrices.last().pose();
                 String distText = (int) dist + "m";
 
-                client.font.drawInBatch("▪", -client.font.width("▪") / 2f, 0, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0, 15728880);
-                client.font.drawInBatch(distText, -client.font.width(distText) / 2f, -12, 0xFFFFFFFF, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0x90000000, 15728880);
+                client.font.drawInBatch("▪", -client.font.width("▪") / 2f, 0, userColor, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0, 15728880);
+                client.font.drawInBatch(distText, -client.font.width(distText) / 2f, -12, userColor, false, matrix, consumers, Font.DisplayMode.SEE_THROUGH, 0x90000000, 15728880);
 
                 matrices.popPose();
             }

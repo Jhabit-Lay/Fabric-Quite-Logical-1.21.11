@@ -17,6 +17,7 @@ import net.jhabit.qlogic.mixin.CopperGolemAccessor;
 import net.jhabit.qlogic.network.CrawlPayload;
 import net.jhabit.qlogic.network.PingPayload;
 import net.jhabit.qlogic.network.RemovePingPayload;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -38,13 +39,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	public static final EntityDataAccessor<Boolean> QLOGIC$CRAWLING = SynchedEntityData.defineId(Player.class, EntityDataSerializers.BOOLEAN);
+
+	private static final Map<UUID, BlockPos> PLAYER_PINGS = new HashMap<>();
 
 	@Override
 	public void onInitialize() {
@@ -70,33 +76,45 @@ public class QuiteLogical implements ModInitializer {
 		PayloadTypeRegistry.playS2C().register(RemovePingPayload.TYPE, RemovePingPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(CrawlPayload.TYPE, CrawlPayload.CODEC);
 
-		// --- [2] 핑(Ping) 서버 수신기 / Ping Server Receiver ---
+		// [KR] 핑 추가 수신기 (1인 1핑 로직) / [EN] Ping Add Receiver (1-ping limit)
 		ServerPlayNetworking.registerGlobalReceiver(PingPayload.TYPE, (payload, context) -> {
 			context.server().execute(() -> {
-				for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
-					ServerPlayNetworking.send(p, payload); // [KR] 모든 플레이어에게 브로드캐스트 / [EN] Broadcast to all
+				UUID uuid = payload.senderUuid();
+
+				// 1. 기존 핑이 있다면 삭제 패킷을 모든 유저에게 먼저 전송
+				if (PLAYER_PINGS.containsKey(uuid)) {
+					BlockPos oldPos = PLAYER_PINGS.get(uuid);
+					RemovePingPayload removePacket = new RemovePingPayload(oldPos);
+					for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
+						ServerPlayNetworking.send(p, removePacket);
+					}
 				}
-				// [KR] 핑 위치에서 소리 재생 / [EN] Play sound at ping location
+
+				// 2. 새 위치 저장 및 모든 유저에게 브로드캐스트
+				PLAYER_PINGS.put(uuid, payload.pos());
+				for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
+					ServerPlayNetworking.send(p, payload);
+				}
+
 				context.player().level().playSound(null, payload.pos(),
 						SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5f, 0.5f);
 			});
 		});
 
-		// --- [3] 핑 제거 서버 수신기 / Ping Remove Server Receiver ---
+		// 핑 제거 수신기 / Ping Removal
 		ServerPlayNetworking.registerGlobalReceiver(RemovePingPayload.TYPE, (payload, context) -> {
 			context.server().execute(() -> {
+				PLAYER_PINGS.remove(context.player().getUUID());
 				for (ServerPlayer p : context.server().getPlayerList().getPlayers()) {
 					ServerPlayNetworking.send(p, payload);
 				}
 			});
 		});
 
-		// --- [4] 엎드리기(Crawl) 서버 수신기 / Crawl Server Receiver ---
+		// 엎드리기 수신기 / Crawl Receiver
 		ServerPlayNetworking.registerGlobalReceiver(CrawlPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> {
-				// [KR] 서버 측 데이터 업데이트 및 포즈 강제 설정
-				// [EN] Update server-side data and force pose
 				player.getEntityData().set(QLOGIC$CRAWLING, payload.isCrawling());
 				player.setPose(payload.isCrawling() ? Pose.SWIMMING : Pose.STANDING);
 			});
