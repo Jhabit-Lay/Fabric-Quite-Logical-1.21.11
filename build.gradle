@@ -3,7 +3,27 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+def getModVersion() {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine 'git', 'describe', '--tags', '--always'
+			standardOutput = stdout
+		}
+		String gitVersion = stdout.toString().trim()
+
+		// 'v1.0.0' 처럼 v가 붙어있으면 제거 (선택 사항)
+		if (gitVersion.startsWith("v")) {
+			gitVersion = gitVersion.substring(1)
+		}
+		return gitVersion
+	} catch (Exception e) {
+		// Git 태그가 없을 경우 gradle.properties에 적힌 기본값 사용
+		return project.mod_version + "-dev"
+	}
+}
+
+version = getModVersion()
 group = project.maven_group
 
 base {
@@ -44,7 +64,7 @@ processResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand "version": project.version
 	}
 }
 
