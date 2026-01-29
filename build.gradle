@@ -1,41 +1,36 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	// [KR] 'fabric-loom' 플러그인을 사용하여 최신 개발 환경을 구성합니다.
+	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
+/**
+ * [KR] Git 태그를 기반으로 버전을 가져오되, 실패 시 안전한 기본값을 반환합니다.
+ */
 def getModVersion() {
 	try {
 		def stdout = new ByteArrayOutputStream()
 		exec {
 			commandLine 'git', 'describe', '--tags', '--always'
 			standardOutput = stdout
+			ignoreExitValue = true
 		}
 		String gitVersion = stdout.toString().trim()
-
-		// 'v1.0.0' 처럼 v가 붙어있으면 제거 (선택 사항)
-		if (gitVersion.startsWith("v")) {
-			gitVersion = gitVersion.substring(1)
-		}
+		if (gitVersion.isEmpty()) return project.mod_version
+		if (gitVersion.startsWith("v")) gitVersion = gitVersion.substring(1)
 		return gitVersion
 	} catch (Exception e) {
-		// Git 태그가 없을 경우 gradle.properties에 적힌 기본값 사용
-		return project.mod_version + "-dev"
+		return project.mod_version
 	}
 }
 
+// [KR] 프로젝트 정보 설정
 version = getModVersion()
 group = project.maven_group
 
 base {
+	// [KR] 생성될 JAR 파일의 기본 이름을 설정합니다 (gradle.properties의 archives_base_name 참조)
 	archivesName = project.archives_base_name
-}
-
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
 }
 
 fabricApi {
@@ -45,22 +40,26 @@ fabricApi {
 }
 
 loom {
-	// AW 파일의 경로를 정확히 지정해야 합니다.
+	// [KR] 액세스 와이드너 설정
 	accessWidenerPath = file("src/main/resources/qlogic.accesswidener")
+
+	// [KR] 매핑 에러 방지를 위해 명시적으로 설정을 분리할 수 있습니다.
+	// (일반적인 경우 dependencies 내에서 선언하는 것으로 충분합니다)
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
+	// [KR] Minecraft 및 매핑 설정
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
+	// [KR] 'non-obfuscated environment' 오류 해결을 위해 가장 표준적인 호출 방식을 사용합니다.
+	mappings loom.officialMojangMappings()
+
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	
 }
 
 processResources {
+	// [KR] 빌드 시 버전을 fabric.mod.json에 자동으로 주입합니다.
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
@@ -69,41 +68,30 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
+	// [KR] Java 21 릴리즈 표준을 준수합니다.
 	it.options.release = 21
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
+	// [KR] 소스 코드 JAR 파일도 함께 생성합니다.
 	withSourcesJar()
-
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
-	inputs.property "archivesName", project.base.archivesName
-
+	// [KR] JAR 파일 내부에 라이선스 파일을 포함합니다.
 	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
+		rename { "${it}_${project.base.archivesName.get()}" }
 	}
 }
 
-// configure the maven publication
+// [KR] Maven 배포 설정
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
 			artifactId = project.archives_base_name
 			from components.java
 		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }
