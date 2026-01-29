@@ -34,7 +34,7 @@ call gradlew.bat clean build
 
 echo [STEP 5/5] Pushing to Remote Repository...
 :: Pushing both commit and tags
-git push origin main --tags
+git push origin master --tags
 
 echo.
 echo ======================================================
