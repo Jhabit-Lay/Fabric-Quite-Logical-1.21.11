@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "qlogic:exposed_powered_rail",
+    "qlogic:weathered_powered_rail",
+    "qlogic:oxidized_powered_rail",
+    "qlogic:waxed_powered_rail",
+    "qlogic:waxed_exposed_powered_rail",
+    "qlogic:waxed_weathered_powered_rail",
+    "qlogic:waxed_oxidized_powered_rail"
+  ]
+}

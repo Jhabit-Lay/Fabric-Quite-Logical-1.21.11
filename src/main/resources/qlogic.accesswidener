@@ -10,7 +10,7 @@ accessible method net/minecraft/client/gui/Gui willPrioritizeExperienceInfo ()Z
 accessible method net/minecraft/client/gui/Gui willPrioritizeJumpInfo ()Z
 accessible method net/minecraft/client/gui/Gui getPlayerVehicleWithHealth ()Lnet/minecraft/world/entity/LivingEntity;
 accessible method net/minecraft/client/gui/Gui getVehicleMaxHearts (Lnet/minecraft/world/entity/LivingEntity;)I
-
+accessible field net/minecraft/world/level/Level isClientSide Z
 
 accessible	method	net/minecraft/server/level/ServerPlayer$RespawnPosAngle	position	()Lnet/minecraft/world/phys/Vec3;
 accessible	method	net/minecraft/server/level/ServerPlayer$RespawnPosAngle	yaw	()F

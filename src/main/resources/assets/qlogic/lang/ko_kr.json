@@ -1,5 +1,12 @@
 {
   "block.qlogic.glow_stick": "야광 막대",
+  "item.qlogic.waxed_powered_rail": "밀랍칠한 동력 레일",
+  "item.qlogic.exposed_powered_rail": "약간 녹슨 동력 레일",
+  "item.qlogic.waxed_exposed_powered_rail": "밀랍칠한 약간 녹슨 동력 레일",
+  "item.qlogic.weathered_powered_rail": "녹슨 동력 레일",
+  "item.qlogic.waxed_weathered_powered_rail": "밀랍칠한 녹슨 동력 레일",
+  "item.qlogic.oxidized_powered_rail": "산화된 동력 레일",
+  "item.qlogic.waxed_oxidized_powered_rail": "밀랍칠한 산화된 동력 레일",
   "tag.qlogic.nuggets" : "금속 조각",
   "entity.qlogic.zombie_leader": "우두머리 좀비",
   "entity.qlogic.jungle_zombie": "정글 좀비",

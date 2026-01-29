@@ -1,5 +1,12 @@
 {
   "block.qlogic.glow_stick": "Glow Stick",
+  "item.qlogic.waxed_powered_rail": "Waxed Powered Rail",
+  "item.qlogic.exposed_powered_rail": "Exposed Powered Rail",
+  "item.qlogic.waxed_exposed_powered_rail": "Waxed Exposed Powered Rail",
+  "item.qlogic.weathered_powered_rail": "Weathered Powered Rail",
+  "item.qlogic.waxed_weathered_powered_rail": "Waxed Weathered Powered Rail",
+  "item.qlogic.oxidized_powered_rail": "Oxidized Powered Rail",
+  "item.qlogic.waxed_oxidized_powered_rail": "Waxed Oxidized Powered Rail",
   "tag.qlogic.nuggets" : "nuggets",
   "entity.qlogic.zombie_leader": "Leader Zombie",
   "entity.qlogic.jungle_zombie": "Jungle Zombie",

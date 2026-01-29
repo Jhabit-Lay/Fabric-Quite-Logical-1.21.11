@@ -14,26 +14,6 @@ import java.util.function.Function;
 
 public class ModItems {
 
-    // 1. 일반 재료 아이템
-    //public static final Item CARBONIZED_IRON = register("carbonized_iron", Item::new, new Item.Properties().stacksTo(64));
-    //public static final Item STEEL_INGOT = register("steel_ingot", Item::new, new Item.Properties().stacksTo(64));
-
-    // 2. 칼 & 곡괭이 (Item::new와 속성 메서드 사용 - 에러 방지용)
-//    public static final Item STEEL_SWORD = register("steel_sword",
-//            Item::new,
-//            new Item.Properties()
-//                    .stacksTo(1)
-//                    .sword(STEEL, 3.0f, -2.4f)
-//                    .component(DataComponents.WEAPON, new Weapon(2))
-//    );
-
-    // 3. 우클릭 기능이 있는 도구들 (전용 클래스 유지 - 기능 보존용)
-    // 사용자님이 확인하신 4인자 생성자 (재질, 공격력, 속도, 설정) 방식을 사용합니다.
-
-//    public static final Item STEEL_AXE = register("steel_axe",
-//            properties -> new AxeItem(STEEL, 6.0f, -3.1f, properties),
-//            new Item.Properties());
-
     public static final Item COPPER_GOAT_HORN = register("copper_goat_horn",
             properties -> new CopperGoatHornItem(properties),
             new Item.Properties()
@@ -56,6 +36,5 @@ public class ModItems {
     }
 
     public static void initialize() {
-        // 메인 클래스에서 호출하여 등록 실행
     }
 }

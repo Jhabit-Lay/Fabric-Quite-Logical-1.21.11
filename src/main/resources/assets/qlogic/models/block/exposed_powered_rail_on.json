@@ -1,0 +1,4 @@
+{
+  "parent": "minecraft:block/rail_flat",
+  "textures": { "rail": "qlogic:block/exposed_powered_rail_on" }
+}

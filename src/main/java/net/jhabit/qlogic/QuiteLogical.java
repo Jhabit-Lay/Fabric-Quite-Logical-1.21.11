@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
+import net.fabricmc.fabric.api.registry.OxidizableBlocksRegistry;
 import net.jhabit.qlogic.block.ModBlocks;
 import net.jhabit.qlogic.entity.ModEntities;
 import net.jhabit.qlogic.items.ModItems;
@@ -43,6 +44,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static net.jhabit.qlogic.block.ModBlocks.*;
+import static net.minecraft.world.level.block.Blocks.POWERED_RAIL;
 
 public class QuiteLogical implements ModInitializer {
 	public static final String MOD_ID = "qlogic";
@@ -119,7 +123,6 @@ public class QuiteLogical implements ModInitializer {
 				player.setPose(payload.isCrawling() ? Pose.SWIMMING : Pose.STANDING);
 			});
 		});
-
 		LOGGER.info("Quite Logical 모드가 성공적으로 로드되었습니다!");
 	}
 
@@ -133,6 +136,27 @@ public class QuiteLogical implements ModInitializer {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			// 염소 뿔(GOAT_HORN) 뒤에 구리 염소 뿔 배치 (자동으로 첫 번째 음반인 13번 음반 앞에 위치함)
 			entries.addAfter(Items.GOAT_HORN, ModItems.COPPER_GOAT_HORN);
+			entries.addAfter(Items.POWERED_RAIL,
+					ModBlocks.EXPOSED_POWERED_RAIL,
+					WEATHERED_POWERED_RAIL,
+					OXIDIZED_POWERED_RAIL,
+					ModBlocks.WAXED_POWERED_RAIL,
+					ModBlocks.WAXED_EXPOSED_POWERED_RAIL,
+					ModBlocks.WAXED_WEATHERED_POWERED_RAIL,
+					WAXED_OXIDIZED_POWERED_RAIL
+			);
+		});
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(entries -> {
+			// 일반 파워레일 뒤에 모든 구리 파워레일 단계를 순서대로 추가
+			entries.addAfter(Items.POWERED_RAIL,
+					ModBlocks.EXPOSED_POWERED_RAIL,
+					WEATHERED_POWERED_RAIL,
+					OXIDIZED_POWERED_RAIL,
+					ModBlocks.WAXED_POWERED_RAIL,
+					ModBlocks.WAXED_EXPOSED_POWERED_RAIL,
+					ModBlocks.WAXED_WEATHERED_POWERED_RAIL,
+					WAXED_OXIDIZED_POWERED_RAIL
+			);
 		});
 	}
 

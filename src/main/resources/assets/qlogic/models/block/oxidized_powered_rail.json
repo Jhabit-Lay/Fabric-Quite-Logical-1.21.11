@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/rail_flat",
+  "textures": {
+    "rail": "qlogic:block/oxidized_powered_rail"
+  }
+}

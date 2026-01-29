@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "qlogic:block/oxidized_powered_rail"
+  }
+}
