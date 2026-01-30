@@ -29,8 +29,11 @@ version = getModVersion()
 group = project.maven_group
 
 base {
-	// [KR] 생성될 JAR 파일의 기본 이름을 설정합니다 (gradle.properties의 archives_base_name 참조)
-	archivesName = project.archives_base_name
+	// [KR] 파일 이름을 'quite-logical'로 고정합니다.
+	// 빌드 시 [archivesName]-[version].jar 형식으로 자동 생성됩니다.
+	// [EN] Set the base name to 'quite-logical'.
+	// The build will result in [archivesName]-[version].jar automatically.
+	archivesName = "quite-logical"
 }
 
 fabricApi {
@@ -42,9 +45,6 @@ fabricApi {
 loom {
 	// [KR] 액세스 와이드너 설정
 	accessWidenerPath = file("src/main/resources/qlogic.accesswidener")
-
-	// [KR] 매핑 에러 방지를 위해 명시적으로 설정을 분리할 수 있습니다.
-	// (일반적인 경우 dependencies 내에서 선언하는 것으로 충분합니다)
 }
 
 dependencies {
@@ -84,13 +84,16 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}" }
 	}
+
+	// [KR] 결과 파일명을 더 명시적으로 제어하고 싶다면 아래 설정을 사용할 수 있습니다.
+	// archiveFileName = "quite-logical-${project.version}.jar"
 }
 
 // [KR] Maven 배포 설정
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
+			artifactId = "quite-logical"
 			from components.java
 		}
 	}

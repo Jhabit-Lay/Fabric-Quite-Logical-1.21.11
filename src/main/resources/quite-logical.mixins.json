@@ -34,7 +34,6 @@
 		"CopperGolemAccessor",
 		"PoisonousPotatoMixin",
 		"EntityTypeUpdateMixin",
-		"AbstractMinecartMixin",
 		"PoweredRailMixin",
 		"PoweredRailPowerMixin"
 	],

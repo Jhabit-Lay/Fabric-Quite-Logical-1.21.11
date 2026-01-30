@@ -43,7 +43,7 @@ public abstract class ItemStackMixin {
         return item == Items.MUSHROOM_STEW || item == Items.RABBIT_STEW || item == Items.SUSPICIOUS_STEW || item == Items.BEETROOT_SOUP;
     }
     private boolean isHorseArmor(Item item) {
-        return item == Items.LEATHER_HORSE_ARMOR || item == Items.IRON_HORSE_ARMOR ||
+        return item == Items.COPPER_HORSE_ARMOR || item == Items.LEATHER_HORSE_ARMOR || item == Items.IRON_HORSE_ARMOR ||
                 item == Items.GOLDEN_HORSE_ARMOR || item == Items.DIAMOND_HORSE_ARMOR || item == Items.NETHERITE_HORSE_ARMOR;
     }
 

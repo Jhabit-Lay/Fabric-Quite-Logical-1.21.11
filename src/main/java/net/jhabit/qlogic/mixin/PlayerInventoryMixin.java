@@ -6,6 +6,7 @@ import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BundleContents;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -14,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PlayerInventoryMixin {
 
     /**
-     * [KR] 1.21.11 서버/클라이언트 공용 아이템 수집 로직 보강
-     * [EN] Enhanced item collection logic for 1.21.11 Server/Client
+     * [KR] 아이템 습득 시 인벤토리에 넣기 전 꾸러미(Bundle) 확인 로직
+     * [EN] Check bundles before adding items to inventory slots
      */
     @Inject(method = "add(ILnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
     private void qlogic$onAddWithSlot(int slot, ItemStack pickedUpStack, CallbackInfoReturnable<Boolean> cir) {
@@ -23,62 +24,53 @@ public abstract class PlayerInventoryMixin {
 
         Inventory inventory = (Inventory) (Object) this;
 
-        // [KR] 1차 순회: 동일한 아이템이 이미 들어있는 꾸러미를 먼저 채웁니다 (Tidy Mode)
-        // [EN] 1st pass: Fill bundles that already contain the same item (Tidy Mode)
-        if (qlogic$tryFillBundles(inventory, pickedUpStack, true)) {
-            if (pickedUpStack.isEmpty()) {
-                cir.setReturnValue(true);
-                return;
-            }
+        // [KR] 동일한 아이템이 이미 들어있는 꾸러미가 있는지 확인하고 채웁니다 (Tidy Mode 전용)
+        // [EN] Only fill bundles that already contain the same item (Tidy Mode only)
+        qlogic$tryFillBundles(inventory, pickedUpStack);
+
+        // [KR] 만약 아이템이 꾸러미에 모두 들어갔다면, 바닐라 로직을 실행하지 않고 종료
+        // [EN] If the stack is fully consumed by bundles, cancel vanilla logic
+        if (pickedUpStack.isEmpty()) {
+            cir.setReturnValue(true);
         }
 
-        // [KR] 2차 순회: 남은 아이템을 빈 공간이 있는 아무 꾸러미에나 순서대로 넣습니다 (Greedy Mode)
-        // [EN] 2nd pass: Fill any available bundles with space (Greedy Mode)
-        if (qlogic$tryFillBundles(inventory, pickedUpStack, false)) {
-            if (pickedUpStack.isEmpty()) {
-                cir.setReturnValue(true);
-                return;
-            }
-        }
-
-        // [KR] 이후 과정은 자연스럽게 원래의 인벤토리 삽입 로직(Default)으로 진행됨
+        // [KR] 아이템이 남아있거나 중복된 꾸러미가 없다면 여기서 메서드가 종료되어
+        // 자연스럽게 바닐라의 인벤토리 삽입 로직이 실행됩니다.
     }
 
     /**
-     * [KR] 꾸러미 삽입 처리 공통 로직
+     * [KR] 인벤토리 내의 꾸러미들을 순회하며 중복 아이템 삽입을 시도합니다.
      */
-    private boolean qlogic$tryFillBundles(Inventory inventory, ItemStack targetStack, boolean mustMatch) {
-        boolean modified = false;
-
+    @Unique
+    private void qlogic$tryFillBundles(Inventory inventory, ItemStack targetStack) {
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack slotStack = inventory.getItem(i);
 
+            // 1. 해당 슬롯이 꾸러미인지 확인
             if (slotStack.getItem() instanceof BundleItem) {
                 BundleContents contents = slotStack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
 
-                // [KR] 중복 체크 모드일 경우 내용물 확인
-                if (mustMatch) {
-                    boolean hasDuplicate = false;
-                    for (ItemStack inner : contents.items()) {
-                        if (ItemStack.isSameItemSameComponents(inner, targetStack)) {
-                            hasDuplicate = true;
-                            break;
-                        }
+                // 2. 꾸러미 내부에 동일한 아이템이 있는지 확인 (중복 체크)
+                boolean hasDuplicate = false;
+                for (ItemStack inner : contents.items()) {
+                    if (ItemStack.isSameItemSameComponents(inner, targetStack)) {
+                        hasDuplicate = true;
+                        break;
                     }
-                    if (!hasDuplicate) continue;
                 }
 
-                // [KR] Mutable 객체를 통한 삽입 시도
-                BundleContents.Mutable mutable = new BundleContents.Mutable(contents);
-                int inserted = mutable.tryInsert(targetStack);
+                // 3. 중복 아이템이 있는 경우에만 삽입 시도
+                if (hasDuplicate) {
+                    BundleContents.Mutable mutable = new BundleContents.Mutable(contents);
+                    int inserted = mutable.tryInsert(targetStack);
 
-                if (inserted > 0) {
-                    slotStack.set(DataComponents.BUNDLE_CONTENTS, mutable.toImmutable());
-                    modified = true;
-                    if (targetStack.isEmpty()) break;
+                    if (inserted > 0) {
+                        slotStack.set(DataComponents.BUNDLE_CONTENTS, mutable.toImmutable());
+                        // 아이템을 다 넣었다면 루프 종료
+                        if (targetStack.isEmpty()) break;
+                    }
                 }
             }
         }
-        return modified;
     }
 }
